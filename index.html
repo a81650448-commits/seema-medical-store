@@ -88,6 +88,28 @@
     <button class="close" onclick="closeCheckout()">×</button>
     <h2>Place Your Order</h2>
     <p class="muted">Store UPI: <strong>7007596728@pt</strong></p>
+    <section id="track-order">
+  <h2>📦 Track Your Order</h2>
+  <p>Enter your Order ID and mobile number.</p>
+
+  <input
+    type="text"
+    id="trackingOrderId"
+    placeholder="Order ID (e.g. SMS-23733805)"
+  >
+
+  <input
+    type="tel"
+    id="trackingPhone"
+    placeholder="Mobile Number"
+  >
+
+  <button type="button" onclick="trackOrder()">
+    🔍 Track Order
+  </button>
+
+  <div id="trackingResult"></div>
+</section>
     <form id="orderForm" onsubmit="submitOrder(event)">
       <div class="form-grid">
         <label>Customer name<input id="customerName" required></label>
