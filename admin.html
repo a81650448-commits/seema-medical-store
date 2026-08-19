@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seema Medical Store | Admin Panel</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#f5f7fb;color:#172033}.top{background:#123b2a;color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center}.top h1{margin:0;font-size:22px}.top small{opacity:.8}.wrap{max-width:1200px;margin:24px auto;padding:0 16px}.card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 5px 24px rgba(0,0,0,.07);margin-bottom:18px}.login{max-width:420px;margin:70px auto}.field{margin:12px 0}.field label{display:block;font-weight:600;margin-bottom:6px}.field input{width:100%;padding:12px;border:1px solid #d8deea;border-radius:8px;font-size:15px}.btn{border:0;border-radius:8px;padding:11px 16px;cursor:pointer;font-weight:700}.primary{background:#123b2a;color:#fff}.danger{background:#b42318;color:#fff}.muted{color:#667085}.hidden{display:none}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.stat strong{display:block;font-size:28px;margin-top:5px}.table-wrap{overflow:auto}.orders{width:100%;border-collapse:collapse;min-width:900px}.orders th,.orders td{padding:12px;border-bottom:1px solid #e8ecf2;text-align:left;vertical-align:top}.orders th{background:#f8fafc;font-size:13px}.status{padding:5px 8px;border-radius:20px;border:1px solid #d0d5dd;background:#fff}.items{margin:0;padding-left:18px}.error{color:#b42318;background:#fff0f0;padding:10px;border-radius:8px;margin-top:10px}.success{color:#067647;background:#ecfdf3;padding:10px;border-radius:8px;margin-top:10px}@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}.top{align-items:flex-start;gap:10px}.top h1{font-size:18px}}
+  </style>
+</head>
+<body>
+  <header class="top"><div><h1>Seema Medical Store — Admin Panel</h1><small>Order management dashboard</small></div><button id="logoutBtn" class="btn" style="display:none">Logout</button></header>
+
+  <main class="wrap">
+    <section id="loginCard" class="card login">
+      <h2>Admin Login</h2>
+      <p class="muted">Sign in with the authorized Seema Medical Store admin account.</p>
+      <form id="loginForm">
+        <div class="field"><label>Email</label><input id="email" type="email" required></div>
+        <div class="field"><label>Password</label><input id="password" type="password" required></div>
+        <button class="btn primary" type="submit">Login</button>
+      </form>
+      <div id="loginError" class="error hidden"></div>
+    </section>
+
+    <section id="dashboard" class="hidden">
+      <div class="stats">
+        <div class="card"><span class="muted">Total Orders</span><strong id="totalOrders">0</strong></div>
+        <div class="card"><span class="muted">Pending</span><strong id="pendingOrders">0</strong></div>
+        <div class="card"><span class="muted">Confirmed</span><strong id="confirmedOrders">0</strong></div>
+        <div class="card"><span class="muted">Total Value</span><strong id="totalValue">₹0</strong></div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+          <div><h2 style="margin:0">Medicine Orders</h2><p id="adminEmail" class="muted"></p></div>
+          <button id="refreshBtn" class="btn primary">Refresh Orders</button>
+        </div>
+        <div id="dashboardError" class="error hidden"></div>
+        <div id="dashboardSuccess" class="success hidden"></div>
+        <div class="table-wrap" style="margin-top:16px">
+          <table class="orders"><thead><tr><th>Order</th><th>Customer</th><th>Medicines</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th></tr></thead><tbody id="ordersBody"></tbody></table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
