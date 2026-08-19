@@ -26,7 +26,7 @@
 <section id="track-order"><h2>📦 Track Your Order</h2><p>Enter your Order ID and mobile number.</p><input type="text" id="trackingOrderId" placeholder="Order ID (e.g. SMS-23733805)"><input type="tel" id="trackingPhone" placeholder="Mobile Number"><button type="button" onclick="trackOrder()">🔍 Track Order</button><div id="trackingResult"></div></section>
 <form id="orderForm" onsubmit="submitOrder(event)"><div class="form-grid"><label>Customer name<input id="customerName" required></label><label>Mobile number<input id="customerPhone" type="tel" pattern="[0-9]{10}" required></label></div><label>Delivery address<textarea id="address" rows="3" required></textarea></label><label>Prescription / doctor note (if required)<input id="prescription" type="file" accept="image/*,.pdf"></label><label>Payment method<select id="paymentMethod" required><option value="UPI">UPI payment</option><option value="COD">Cash on delivery (if available)</option></select></label><label>UPI transaction reference (after payment)<input id="txn" placeholder="e.g. UTR / transaction ID"></label><div class="order-summary"><div id="checkoutItems"></div><strong>Total: <span id="checkoutTotal">₹0</span></strong></div><button class="primary full" type="submit">Submit Order</button><p class="small">Important: Online payment confirmation and order acceptance are subject to store verification. Prescription medicines will only be supplied after appropriate verification.</p></form><div id="orderSuccess" class="success" hidden></div></aside></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-config.js?v=20260819"></script>
-<script src="script.js?v=20260819-2"></script>
+<script src="supabase-config.js?v=20260819-2"></script>
+<script src="script.js?v=20260819-3"></script>
 </body>
 </html>
