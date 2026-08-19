@@ -143,3 +143,80 @@ function closeCheckout(e){if(!e||e.target===document.getElementById("checkoutOve
     );
   }
 }
+
+async function trackOrder() {
+  const orderId = document.getElementById("trackingOrderId").value.trim();
+  const phone = document.getElementById("trackingPhone").value.trim();
+  const result = document.getElementById("trackingResult");
+
+  if (!orderId || !phone) {
+    result.innerHTML = "<p>Please enter Order ID and mobile number.</p>";
+    return;
+  }
+
+  result.innerHTML = "<p>Checking your order...</p>";
+
+  try {
+    const db = window.supabase.createClient(
+      window.SUPABASE_URL,
+      window.SUPABASE_ANON_KEY
+    );
+
+    const { data, error } = await db.rpc("track_order", {
+      p_order_id: orderId,
+      p_phone: phone
+    });
+
+    if (error) {
+      console.error(error);
+      result.innerHTML =
+        "<p>Unable to track the order. Please try again.</p>";
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      result.innerHTML =
+        "<p><strong>Order not found.</strong><br>" +
+        "Please check your Order ID and mobile number.</p>";
+      return;
+    }
+
+    const order = data[0];
+
+    const statuses = [
+      "Pending",
+      "Confirmed",
+      "Packed",
+      "Out for Delivery",
+      "Delivered"
+    ];
+
+    const currentIndex = statuses.indexOf(order.status);
+
+    result.innerHTML = `
+      <div class="tracking-card">
+        <h3>Order ${order.order_id}</h3>
+
+        <p><strong>Customer:</strong> ${order.customer_name}</p>
+        <p><strong>Total:</strong> ₹${order.total}</p>
+        <p><strong>Payment:</strong> ${order.payment_method}</p>
+
+        <div class="tracking-status">
+          ${statuses.map((status, index) => `
+            <div class="${index <= currentIndex ? "completed" : ""}">
+              <span>${index <= currentIndex ? "✓" : "○"}</span>
+              <strong>${status}</strong>
+            </div>
+          `).join("")}
+        </div>
+
+        <h3>Current Status: ${order.status}</h3>
+      </div>
+    `;
+
+  } catch (error) {
+    console.error(error);
+    result.innerHTML =
+      "<p>Something went wrong. Please try again.</p>";
+  }
+}
