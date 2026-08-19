@@ -23,7 +23,7 @@ function togglePaymentFields(){const method=document.getElementById("paymentMeth
 async function submitOrder(e){
  e.preventDefault();
  if(!cart.length){alert("Please add at least one product.");return}
- const button=document.querySelector('#orderForm button[type="submit"]');if(button){button.disabled=true;button.textContent="Checking payment..."}
+ const button=document.querySelector('#orderForm button[type="submit"]');if(button){button.disabled=true;button.textContent="Submitting order..."}
  try{
   if(!window.supabase||!window.SUPABASE_URL||!window.SUPABASE_ANON_KEY)throw new Error("Supabase connection is missing. Refresh the page.");
   const payment=document.getElementById("paymentMethod").value;
@@ -35,16 +35,21 @@ async function submitOrder(e){
   const address=document.getElementById("address").value.trim();
   const items=cart.map(x=>({name:products[x.i][1],pack:products[x.i][2],qty:x.q,price:Number(products[x.i][3])||0}));
   const orderId="SMS-"+Date.now().toString().slice(-8);
-  const payload={order_id:orderId,customer_name:name,phone:phone,address:address,payment_method:payment,transaction_id:payment==="UPI"?txn:null,items:items,total:total(),status:"Pending"};
+  const orderTotal=total();
+  const payload={order_id:orderId,customer_name:name,phone:phone,address:address,payment_method:payment,transaction_id:payment==="UPI"?txn:null,items:items,total:orderTotal,status:"Pending"};
+
+  // Customer save is optional. The order itself must succeed even if this table has a separate RLS rule.
   const customerResult=await db.from("customers").insert({name:name,phone:phone,address:address});
   if(customerResult.error)console.warn("Customer save warning:",customerResult.error.message);
-  const orderResult=await db.from("orders").insert(payload).select("order_id,status,total").single();
+
+  // Do not call .select() here. Anonymous customers have INSERT permission only;
+  // reading the newly-created order is intentionally blocked by RLS.
+  const orderResult=await db.from("orders").insert(payload);
   if(orderResult.error)throw new Error(orderResult.error.message+(orderResult.error.details?" — "+orderResult.error.details:""));
-  const submittedOrderId=orderResult.data.order_id;
-  const submittedTotal=orderResult.data.total;
+
   document.getElementById("orderForm").hidden=true;
   document.getElementById("orderSuccess").hidden=false;
-  document.getElementById("orderSuccess").innerHTML=`<strong>Order submitted successfully!</strong><br><br>Order ID: <strong>${submittedOrderId}</strong><br>Total: <strong>₹${submittedTotal}</strong><br>Payment: <strong>${payment==="UPI"?"UPI / QR — UTR recorded":"Cash on Delivery"}</strong><br><br>Keep this Order ID to track your order.<br><br><button type="button" class="primary" onclick="startAnotherOrder()">🛒 Place Another Order</button>`;
+  document.getElementById("orderSuccess").innerHTML=`<strong>Order submitted successfully!</strong><br><br>Order ID: <strong>${orderId}</strong><br>Total: <strong>₹${orderTotal}</strong><br>Payment: <strong>${payment==="UPI"?"UPI / QR — UTR recorded":"Cash on Delivery"}</strong><br><br>Keep this Order ID to track your order.<br><br><button type="button" class="primary" onclick="startAnotherOrder()">🛒 Place Another Order</button>`;
   cart=[];updateCart();
  }catch(error){console.error("ORDER SUBMISSION ERROR",error);alert(error.message||"Unable to submit the order.")}
  finally{if(button){button.disabled=false;button.textContent="Confirm & Place Order"}}
