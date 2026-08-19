@@ -57,21 +57,90 @@ function openCheckout(){
 function closeCheckout(e){if(!e||e.target===document.getElementById("checkoutOverlay"))document.getElementById("checkoutOverlay").classList.remove("open");}
 
 function submitOrder(e){
+ async function submitOrder(e) {
   e.preventDefault();
-  const items=cart.map(x=>({name:products[x.i][1],pack:products[x.i][2],qty:x.q,price:products[x.i][3]}));
-  const order={
-    orderId:"SMS-"+Date.now().toString().slice(-8),
-    customer:document.getElementById("customerName").value,
-    phone:document.getElementById("customerPhone").value,
-    address:document.getElementById("address").value,
-    payment:document.getElementById("paymentMethod").value,
-    transactionId:document.getElementById("txn").value,
-    items,total:total(),
-    createdAt:new Date().toISOString()
+
+  if (!cart.length) {
+    alert("Please add at least one product.");
+    return;
+  }
+
+  const items = cart.map(x => ({
+    name: products[x.i][1],
+    pack: products[x.i][2],
+    qty: x.q,
+    price: products[x.i][3]
+  }));
+
+  const orderId = "SMS-" + Date.now().toString().slice(-8);
+
+  const customerName = document.getElementById("customerName").value.trim();
+  const phone = document.getElementById("customerPhone").value.trim();
+  const address = document.getElementById("address").value.trim();
+  const paymentMethod = document.getElementById("paymentMethod").value;
+  const transactionId = document.getElementById("txn").value.trim();
+
+  const orderData = {
+    order_id: orderId,
+    customer_name: customerName,
+    phone: phone,
+    address: address,
+    payment_method: paymentMethod,
+    transaction_id: transactionId || null,
+    items: items,
+    total: total(),
+    status: "pending"
   };
-  localStorage.setItem("lastSeemaOrder",JSON.stringify(order));
-  document.getElementById("orderForm").hidden=true;
-  document.getElementById("orderSuccess").hidden=false;
-  document.getElementById("orderSuccess").innerHTML=`<strong>Order request created: ${order.orderId}</strong><br><br>Total: ₹${order.total}<br>UPI: <strong>7007596728@pt</strong><br><br>Your website frontend is ready. For real online order storage and an admin panel, connect this form to a database such as Supabase/Firebase.`;
+
+  try {
+    const db = window.supabase.createClient(
+      window.SUPABASE_URL,
+      window.SUPABASE_ANON_KEY
+    );
+
+    // Save customer
+    const { error: customerError } = await db
+      .from("customers")
+      .insert([{
+        name: customerName,
+        phone: phone,
+        address: address
+      }]);
+
+    if (customerError) {
+      console.error("Customer error:", customerError);
+    }
+
+    // Save order
+    const { error: orderError } = await db
+      .from("orders")
+      .insert([orderData]);
+
+    if (orderError) {
+      console.error("Order error:", orderError);
+      throw orderError;
+    }
+
+    document.getElementById("orderForm").hidden = true;
+    document.getElementById("orderSuccess").hidden = false;
+
+    document.getElementById("orderSuccess").innerHTML = `
+      <strong>Order submitted successfully!</strong>
+      <br><br>
+      Order ID: <strong>${orderId}</strong>
+      <br>
+      Total: <strong>₹${orderData.total}</strong>
+      <br><br>
+      Your order has been received by Seema Medical Store.
+      The store will verify your order and payment before processing.
+    `;
+
+    cart = [];
+    updateCart();
+
+  } catch (error) {
+    alert(
+      "Unable to submit the order. Please check your internet connection and try again."
+    );
+  }
 }
-renderProducts(); updateCart();
