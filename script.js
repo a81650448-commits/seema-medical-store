@@ -56,7 +56,6 @@ function openCheckout(){
 }
 function closeCheckout(e){if(!e||e.target===document.getElementById("checkoutOverlay"))document.getElementById("checkoutOverlay").classList.remove("open");}
 
-function submitOrder(e){
  async function submitOrder(e) {
   e.preventDefault();
 
