@@ -18,8 +18,8 @@ async function loadOrders(){
 
   const orders = data || [];
   document.getElementById("totalOrders").textContent = orders.length;
-  document.getElementById("pendingOrders").textContent = orders.filter(o => o.status === "pending").length;
-  document.getElementById("confirmedOrders").textContent = orders.filter(o => ["confirmed","delivered"].includes(o.status)).length;
+  document.getElementById("pendingOrders").textContent = orders.filter(o => o.status === "Pending").length;
+  document.getElementById("confirmedOrders").textContent = orders.filter(o => ["Confirmed","Delivered"].includes(o.status)).length;
   document.getElementById("totalValue").textContent = "₹" + orders.reduce((s,o)=>s+Number(o.total||0),0).toFixed(2);
 
   document.getElementById("ordersBody").innerHTML = orders.length ? orders.map(o => {
@@ -27,7 +27,7 @@ async function loadOrders(){
     const itemHtml = items.map(i => `<li>${escapeHtml(i.name)} × ${Number(i.qty||0)}</li>`).join("");
     const customer = `<strong>${escapeHtml(o.customer_name)}</strong><br><a href="tel:${escapeHtml(o.phone)}">${escapeHtml(o.phone)}</a><br><span class="muted">${escapeHtml(o.address)}</span>`;
     const payment = `${escapeHtml(o.payment_method)}${o.transaction_id ? `<br><small>UTR: ${escapeHtml(o.transaction_id)}</small>` : ""}`;
-    const status = `<select class="status" data-id="${o.id}"><option value="pending" ${o.status==='pending'?'selected':''}>Pending</option><option value="confirmed" ${o.status==='confirmed'?'selected':''}>Confirmed</option><option value="packed" ${o.status==='packed'?'selected':''}>Packed</option><option value="out_for_delivery" ${o.status==='out_for_delivery'?'selected':''}>Out for delivery</option><option value="delivered" ${o.status==='delivered'?'selected':''}>Delivered</option><option value="cancelled" ${o.status==='cancelled'?'selected':''}>Cancelled</option></select>`;
+    const status = `<select class="status" data-id="${o.id}"><option value="Pending" ${o.status==='Pending'?'selected':''}>Pending</option><option value="Confirmed" ${o.status==='Confirmed'?'selected':''}>Confirmed</option><option value="Packed" ${o.status==='Packed'?'selected':''}>Packed</option><option value="Out for Delivery" ${o.status==='Out for Delivery'?'selected':''}>Out for delivery</option><option value="Delivered" ${o.status==='Delivered'?'selected':''}>Delivered</option><option value="Cancelled" ${o.status==='Cancelled'?'selected':''}>Cancelled</option></select>`;
     return `<tr><td><strong>${escapeHtml(o.order_id)}</strong></td><td>${customer}</td><td><ul class="items">${itemHtml || '<li>No items</li>'}</ul></td><td><strong>₹${Number(o.total||0).toFixed(2)}</strong></td><td>${payment}</td><td>${status}</td><td>${new Date(o.created_at).toLocaleString('en-IN')}</td></tr>`;
   }).join("") : `<tr><td colspan="7" class="muted">No orders yet.</td></tr>`;
 
