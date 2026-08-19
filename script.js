@@ -56,7 +56,7 @@ function openCheckout(){
 }
 function closeCheckout(e){if(!e||e.target===document.getElementById("checkoutOverlay"))document.getElementById("checkoutOverlay").classList.remove("open");}
 
- async function submitOrder(e) {
+async function submitOrder(e) {
   e.preventDefault();
 
   if (!cart.length) {
@@ -88,7 +88,7 @@ function closeCheckout(e){if(!e||e.target===document.getElementById("checkoutOve
     transaction_id: transactionId || null,
     items: items,
     total: total(),
-    status: "pending"
+    status: "Pending"
   };
 
   try {
@@ -97,7 +97,6 @@ function closeCheckout(e){if(!e||e.target===document.getElementById("checkoutOve
       window.SUPABASE_ANON_KEY
     );
 
-    // Save customer
     const { error: customerError } = await db
       .from("customers")
       .insert([{
@@ -110,7 +109,6 @@ function closeCheckout(e){if(!e||e.target===document.getElementById("checkoutOve
       console.error("Customer error:", customerError);
     }
 
-    // Save order
     const { error: orderError } = await db
       .from("orders")
       .insert([orderData]);
@@ -138,9 +136,8 @@ function closeCheckout(e){if(!e||e.target===document.getElementById("checkoutOve
     updateCart();
 
   } catch (error) {
-    alert(
-      "Unable to submit the order. Please check your internet connection and try again."
-    );
+    console.error("Order submission failed:", error);
+    alert("Unable to submit the order. Please try again.");
   }
 }
 
@@ -169,15 +166,12 @@ async function trackOrder() {
 
     if (error) {
       console.error(error);
-      result.innerHTML =
-        "<p>Unable to track the order. Please try again.</p>";
+      result.innerHTML = "<p>Unable to track the order. Please try again.</p>";
       return;
     }
 
     if (!data || data.length === 0) {
-      result.innerHTML =
-        "<p><strong>Order not found.</strong><br>" +
-        "Please check your Order ID and mobile number.</p>";
+      result.innerHTML = "<p><strong>Order not found.</strong><br>Please check your Order ID and mobile number.</p>";
       return;
     }
 
@@ -196,11 +190,9 @@ async function trackOrder() {
     result.innerHTML = `
       <div class="tracking-card">
         <h3>Order ${order.order_id}</h3>
-
         <p><strong>Customer:</strong> ${order.customer_name}</p>
         <p><strong>Total:</strong> ₹${order.total}</p>
         <p><strong>Payment:</strong> ${order.payment_method}</p>
-
         <div class="tracking-status">
           ${statuses.map((status, index) => `
             <div class="${index <= currentIndex ? "completed" : ""}">
@@ -209,14 +201,11 @@ async function trackOrder() {
             </div>
           `).join("")}
         </div>
-
         <h3>Current Status: ${order.status}</h3>
       </div>
     `;
-
   } catch (error) {
     console.error(error);
-    result.innerHTML =
-      "<p>Something went wrong. Please try again.</p>";
+    result.innerHTML = "<p>Something went wrong. Please try again.</p>";
   }
 }
