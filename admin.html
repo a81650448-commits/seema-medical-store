@@ -10,43 +10,12 @@
 </head>
 <body>
   <header class="top"><div><h1>Seema Medical Store — Admin Panel</h1><small>Order management dashboard</small></div><button id="logoutBtn" class="btn" style="display:none">Logout</button></header>
-
   <main class="wrap">
-    <section id="loginCard" class="card login">
-      <h2>Admin Login</h2>
-      <p class="muted">Sign in with the authorized Seema Medical Store admin account.</p>
-      <form id="loginForm">
-        <div class="field"><label>Email</label><input id="email" type="email" required></div>
-        <div class="field"><label>Password</label><input id="password" type="password" required></div>
-        <button class="btn primary" type="submit">Login</button>
-      </form>
-      <div id="loginError" class="error hidden"></div>
-    </section>
-
-    <section id="dashboard" class="hidden">
-      <div class="stats">
-        <div class="card"><span class="muted">Total Orders</span><strong id="totalOrders">0</strong></div>
-        <div class="card"><span class="muted">Pending</span><strong id="pendingOrders">0</strong></div>
-        <div class="card"><span class="muted">Confirmed</span><strong id="confirmedOrders">0</strong></div>
-        <div class="card"><span class="muted">Total Value</span><strong id="totalValue">₹0</strong></div>
-      </div>
-
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
-          <div><h2 style="margin:0">Medicine Orders</h2><p id="adminEmail" class="muted"></p></div>
-          <button id="refreshBtn" class="btn primary">Refresh Orders</button>
-        </div>
-        <div id="dashboardError" class="error hidden"></div>
-        <div id="dashboardSuccess" class="success hidden"></div>
-        <div class="table-wrap" style="margin-top:16px">
-          <table class="orders"><thead><tr><th>Order</th><th>Customer</th><th>Medicines</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th></tr></thead><tbody id="ordersBody"></tbody></table>
-        </div>
-      </div>
-    </section>
+    <section id="loginCard" class="card login"><h2>Admin Login</h2><p class="muted">Sign in with the authorized Seema Medical Store admin account.</p><form id="loginForm"><div class="field"><label>Email</label><input id="email" type="email" required></div><div class="field"><label>Password</label><input id="password" type="password" required></div><button class="btn primary" type="submit">Login</button></form><div id="loginError" class="error hidden"></div></section>
+    <section id="dashboard" class="hidden"><div class="stats"><div class="card"><span class="muted">Total Orders</span><strong id="totalOrders">0</strong></div><div class="card"><span class="muted">Pending</span><strong id="pendingOrders">0</strong></div><div class="card"><span class="muted">Confirmed</span><strong id="confirmedOrders">0</strong></div><div class="card"><span class="muted">Total Value</span><strong id="totalValue">₹0</strong></div></div><div class="card"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><div><h2 style="margin:0">Medicine Orders</h2><p id="adminEmail" class="muted"></p></div><button id="refreshBtn" class="btn primary">Refresh Orders</button></div><div id="dashboardError" class="error hidden"></div><div id="dashboardSuccess" class="success hidden"></div><div class="table-wrap" style="margin-top:16px"><table class="orders"><thead><tr><th>Order</th><th>Customer</th><th>Medicines</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th></tr></thead><tbody id="ordersBody"></tbody></table></div></div></section>
   </main>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js"></script>
-  <script src="admin.js"></script>
+  <script src="supabase-config.js?v=20260819-2"></script>
+  <script src="admin.js?v=20260819-2"></script>
 </body>
 </html>
