@@ -28,21 +28,45 @@ async function loadOrders(){
     const customer = `<strong>${escapeHtml(o.customer_name)}</strong><br><a href="tel:${escapeHtml(o.phone)}">${escapeHtml(o.phone)}</a><br><span class="muted">${escapeHtml(o.address)}</span>`;
     const payment = `${escapeHtml(o.payment_method)}${o.transaction_id ? `<br><small>UTR: ${escapeHtml(o.transaction_id)}</small>` : ""}`;
     const status = `<select class="status" data-id="${o.id}"><option value="Pending" ${o.status==='Pending'?'selected':''}>Pending</option><option value="Confirmed" ${o.status==='Confirmed'?'selected':''}>Confirmed</option><option value="Packed" ${o.status==='Packed'?'selected':''}>Packed</option><option value="Out for Delivery" ${o.status==='Out for Delivery'?'selected':''}>Out for delivery</option><option value="Delivered" ${o.status==='Delivered'?'selected':''}>Delivered</option><option value="Cancelled" ${o.status==='Cancelled'?'selected':''}>Cancelled</option></select>`;
-    return `<tr><td><strong>${escapeHtml(o.order_id)}</strong></td><td>${customer}</td><td><ul class="items">${itemHtml || '<li>No items</li>'}</ul></td><td><strong>₹${Number(o.total||0).toFixed(2)}</strong></td><td>${payment}</td><td>${status}</td><td>${new Date(o.created_at).toLocaleString('en-IN')}</td></tr>`;
-  }).join("") : `<tr><td colspan="7" class="muted">No orders yet.</td></tr>`;
+    const deleteButton = `<button class="btn danger delete-btn" data-delete-id="${o.id}" ${o.status === 'Delivered' ? '' : 'disabled'} title="Delete only after delivery">🗑️ Delete Order</button>`;
+    return `<tr><td><strong>${escapeHtml(o.order_id)}</strong></td><td>${customer}</td><td><ul class="items">${itemHtml || '<li>No items</li>'}</ul></td><td><strong>₹${Number(o.total||0).toFixed(2)}</strong></td><td>${payment}</td><td>${status}</td><td>${new Date(o.created_at).toLocaleString('en-IN')}</td><td>${deleteButton}</td></tr>`;
+  }).join("") : `<tr><td colspan="8" class="muted">No orders yet.</td></tr>`;
 
   document.querySelectorAll("select.status").forEach(select => {
     select.addEventListener("change", () => updateStatus(select.dataset.id, select.value));
+  });
+  document.querySelectorAll("button[data-delete-id]").forEach(button => {
+    button.addEventListener("click", () => deleteOrder(button.dataset.deleteId));
   });
 }
 
 async function updateStatus(id, status){
   hide(dashboardError); hide(dashboardSuccess);
   const { error } = await db.from("orders").update({status}).eq("id", id);
-  if(error){ showError(dashboardError, "Status update failed: " + error.message); return; }
+  if(error){ showError(dashboardError, "Status update failed: " + error.message); await loadOrders(); return; }
   dashboardSuccess.textContent = "Order status updated successfully.";
   dashboardSuccess.classList.remove("hidden");
+  await loadOrders();
   setTimeout(()=>hide(dashboardSuccess), 2500);
+}
+
+async function deleteOrder(id){
+  hide(dashboardError); hide(dashboardSuccess);
+  const { data: order, error: fetchError } = await db.from("orders").select("id,order_id,status").eq("id", id).single();
+  if(fetchError){ showError(dashboardError, "Unable to verify order: " + fetchError.message); return; }
+  if(order.status !== "Delivered"){
+    showError(dashboardError, "Only delivered orders can be deleted.");
+    await loadOrders();
+    return;
+  }
+  const confirmed = window.confirm(`Delete delivered order ${order.order_id}?\n\nThis will permanently remove the order from the admin panel.`);
+  if(!confirmed) return;
+  const { error } = await db.from("orders").delete().eq("id", id).eq("status", "Delivered");
+  if(error){ showError(dashboardError, "Delete failed: " + error.message); return; }
+  dashboardSuccess.textContent = `Order ${order.order_id} deleted successfully.`;
+  dashboardSuccess.classList.remove("hidden");
+  await loadOrders();
+  setTimeout(()=>hide(dashboardSuccess), 3000);
 }
 
 function escapeHtml(value){
