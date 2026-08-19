@@ -1,106 +1,15 @@
-const ADMIN_EMAIL = "a81650448@gmail.com";
-const db = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-
-const loginCard = document.getElementById("loginCard");
-const dashboard = document.getElementById("dashboard");
-const loginError = document.getElementById("loginError");
-const dashboardError = document.getElementById("dashboardError");
-const dashboardSuccess = document.getElementById("dashboardSuccess");
-const logoutBtn = document.getElementById("logoutBtn");
-
-function showError(el, msg){ el.textContent = msg; el.classList.remove("hidden"); }
-function hide(el){ el.classList.add("hidden"); }
-
-async function loadOrders(){
-  hide(dashboardError);
-  const { data, error } = await db.from("orders").select("*").order("created_at", {ascending:false});
-  if(error){ showError(dashboardError, "Unable to load orders: " + error.message); return; }
-
-  const orders = data || [];
-  document.getElementById("totalOrders").textContent = orders.length;
-  document.getElementById("pendingOrders").textContent = orders.filter(o => o.status === "Pending").length;
-  document.getElementById("confirmedOrders").textContent = orders.filter(o => ["Confirmed","Delivered"].includes(o.status)).length;
-  document.getElementById("totalValue").textContent = "₹" + orders.reduce((s,o)=>s+Number(o.total||0),0).toFixed(2);
-
-  document.getElementById("ordersBody").innerHTML = orders.length ? orders.map(o => {
-    const items = Array.isArray(o.items) ? o.items : [];
-    const itemHtml = items.map(i => `<li>${escapeHtml(i.name)} × ${Number(i.qty||0)}</li>`).join("");
-    const customer = `<strong>${escapeHtml(o.customer_name)}</strong><br><a href="tel:${escapeHtml(o.phone)}">${escapeHtml(o.phone)}</a><br><span class="muted">${escapeHtml(o.address)}</span>`;
-    const payment = `${escapeHtml(o.payment_method)}${o.transaction_id ? `<br><small>UTR: ${escapeHtml(o.transaction_id)}</small>` : ""}`;
-    const status = `<select class="status" data-id="${o.id}"><option value="Pending" ${o.status==='Pending'?'selected':''}>Pending</option><option value="Confirmed" ${o.status==='Confirmed'?'selected':''}>Confirmed</option><option value="Packed" ${o.status==='Packed'?'selected':''}>Packed</option><option value="Out for Delivery" ${o.status==='Out for Delivery'?'selected':''}>Out for delivery</option><option value="Delivered" ${o.status==='Delivered'?'selected':''}>Delivered</option><option value="Cancelled" ${o.status==='Cancelled'?'selected':''}>Cancelled</option></select>`;
-    const deleteButton = `<button class="btn danger delete-btn" data-delete-id="${o.id}" ${o.status === 'Delivered' ? '' : 'disabled'} title="Delete only after delivery">🗑️ Delete Order</button>`;
-    return `<tr><td><strong>${escapeHtml(o.order_id)}</strong></td><td>${customer}</td><td><ul class="items">${itemHtml || '<li>No items</li>'}</ul></td><td><strong>₹${Number(o.total||0).toFixed(2)}</strong></td><td>${payment}</td><td>${status}</td><td>${new Date(o.created_at).toLocaleString('en-IN')}</td><td>${deleteButton}</td></tr>`;
-  }).join("") : `<tr><td colspan="8" class="muted">No orders yet.</td></tr>`;
-
-  document.querySelectorAll("select.status").forEach(select => {
-    select.addEventListener("change", () => updateStatus(select.dataset.id, select.value));
-  });
-  document.querySelectorAll("button[data-delete-id]").forEach(button => {
-    button.addEventListener("click", () => deleteOrder(button.dataset.deleteId));
-  });
-}
-
-async function updateStatus(id, status){
-  hide(dashboardError); hide(dashboardSuccess);
-  const { error } = await db.from("orders").update({status}).eq("id", id);
-  if(error){ showError(dashboardError, "Status update failed: " + error.message); await loadOrders(); return; }
-  dashboardSuccess.textContent = "Order status updated successfully.";
-  dashboardSuccess.classList.remove("hidden");
-  await loadOrders();
-  setTimeout(()=>hide(dashboardSuccess), 2500);
-}
-
-async function deleteOrder(id){
-  hide(dashboardError); hide(dashboardSuccess);
-  const { data: order, error: fetchError } = await db.from("orders").select("id,order_id,status").eq("id", id).single();
-  if(fetchError){ showError(dashboardError, "Unable to verify order: " + fetchError.message); return; }
-  if(order.status !== "Delivered"){
-    showError(dashboardError, "Only delivered orders can be deleted.");
-    await loadOrders();
-    return;
-  }
-  const confirmed = window.confirm(`Delete delivered order ${order.order_id}?\n\nThis will permanently remove the order from the admin panel.`);
-  if(!confirmed) return;
-  const { error } = await db.from("orders").delete().eq("id", id).eq("status", "Delivered");
-  if(error){ showError(dashboardError, "Delete failed: " + error.message); return; }
-  dashboardSuccess.textContent = `Order ${order.order_id} deleted successfully.`;
-  dashboardSuccess.classList.remove("hidden");
-  await loadOrders();
-  setTimeout(()=>hide(dashboardSuccess), 3000);
-}
-
-function escapeHtml(value){
-  return String(value ?? "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[c]));
-}
-
-async function showSession(){
-  const { data:{session} } = await db.auth.getSession();
-  if(!session){ loginCard.classList.remove("hidden"); dashboard.classList.add("hidden"); logoutBtn.style.display="none"; return; }
-  if(session.user.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
-    await db.auth.signOut();
-    showError(loginError, "This account is not authorized for the admin panel.");
-    return;
-  }
-  hide(loginCard);
-  dashboard.classList.remove("hidden");
-  logoutBtn.style.display="block";
-  document.getElementById("adminEmail").textContent = "Signed in as " + session.user.email;
-  await loadOrders();
-}
-
-document.getElementById("loginForm").addEventListener("submit", async (e)=>{
-  e.preventDefault(); hide(loginError);
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-  if(email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
-    showError(loginError, "Use the authorized admin email."); return;
-  }
-  const { error } = await db.auth.signInWithPassword({email,password});
-  if(error){ showError(loginError, error.message); return; }
-  await showSession();
-});
-
-logoutBtn.addEventListener("click", async ()=>{ await db.auth.signOut(); await showSession(); });
-document.getElementById("refreshBtn").addEventListener("click", loadOrders);
-db.auth.onAuthStateChange(() => showSession());
-showSession();
+const ADMIN_EMAIL="a81650448@gmail.com";const db=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);const $=id=>document.getElementById(id);let orders=[],medicines=[];
+function esc(v){return String(v??"").replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}function money(v){return '₹'+Number(v||0).toFixed(2)}function msg(t,ok=true){$('msg').textContent=t;$('msg').className='card '+(ok?'success':'danger');setTimeout(()=>$('msg').classList.add('hidden'),3000)}
+async function load(){await loadOrders();await loadMedicines()}
+async function loadOrders(){const {data,error}=await db.from('orders').select('*').order('created_at',{ascending:false});if(error){msg('Unable to load orders: '+error.message,false);return}orders=data||[];renderOrders();renderCustomers();renderPayments();renderDelivery();renderReports();renderNotifications();}
+function renderOrders(){const q=($('orderSearch')?.value||'').toLowerCase();const list=orders.filter(o=>`${o.order_id} ${o.customer_name} ${o.phone}`.toLowerCase().includes(q));$('ordersBody').innerHTML=list.length?list.map(o=>{const items=Array.isArray(o.items)?o.items.map(i=>`${esc(i.name)} × ${Number(i.qty||0)}`).join('<br>'):'—';return `<tr><td><b>${esc(o.order_id)}</b></td><td>${esc(o.customer_name)}<br><a href="tel:${esc(o.phone)}">${esc(o.phone)}</a><br>${esc(o.address)}</td><td>${items}</td><td>${money(o.total)}</td><td>${esc(o.payment_method)}${o.transaction_id?`<br>UTR: ${esc(o.transaction_id)}`:''}</td><td><select class="select status" data-id="${o.id}"><option ${o.status==='Pending'?'selected':''}>Pending</option><option ${o.status==='Confirmed'?'selected':''}>Confirmed</option><option ${o.status==='Packed'?'selected':''}>Packed</option><option ${o.status==='Out for Delivery'?'selected':''}>Out for Delivery</option><option ${o.status==='Delivered'?'selected':''}>Delivered</option><option ${o.status==='Cancelled'?'selected':''}>Cancelled</option></select></td><td>${new Date(o.created_at).toLocaleString('en-IN')}</td><td>${o.status==='Delivered'?`<button class="btn danger delete" data-id="${o.id}">🗑️ Delete</button>`:'—'}</td></tr>`}).join(''):'<tr><td colspan="8">No orders found.</td></tr>';document.querySelectorAll('.status').forEach(x=>x.onchange=()=>updateStatus(x.dataset.id,x.value));document.querySelectorAll('.delete').forEach(x=>x.onclick=()=>deleteOrder(x.dataset.id));const delivered=orders.filter(o=>o.status==='Delivered').length;const pending=orders.filter(o=>o.status==='Pending').length;const sales=orders.reduce((s,o)=>s+Number(o.total||0),0);$('sTotal').textContent=orders.length;$('sPending').textContent=pending;$('sDelivered').textContent=delivered;$('sSales').textContent=money(sales)}
+async function updateStatus(id,status){const {error}=await db.from('orders').update({status}).eq('id',id);if(error){msg('Status update failed: '+error.message,false);return}msg('Order status updated');await loadOrders()}
+async function deleteOrder(id){const o=orders.find(x=>x.id===id);if(!o||o.status!=='Delivered'){msg('Only delivered orders can be deleted.',false);return}if(!confirm(`Delete delivered order ${o.order_id}? This cannot be undone.`))return;const {error}=await db.from('orders').delete().eq('id',id).eq('status','Delivered');if(error){msg('Delete failed: '+error.message,false);return}msg('Order deleted successfully');await loadOrders()}
+async function loadMedicines(){const {data,error}=await db.from('medicines').select('*').order('name');if(error){$('medicinesBody').innerHTML='<tr><td colspan="7">Medicine table not available yet. Create the medicines table in Supabase first.</td></tr>';return}medicines=data||[];renderMedicines()}
+function renderMedicines(){const q=($('medicineSearch')?.value||'').toLowerCase();const list=medicines.filter(m=>`${m.name} ${m.category||''} ${m.manufacturer||''}`.toLowerCase().includes(q));$('medicinesBody').innerHTML=list.length?list.map(m=>`<tr><td>${esc(m.name)}</td><td>${esc(m.category)}</td><td>${money(m.price)}</td><td><b>${Number(m.stock||0)}</b></td><td>${esc(m.manufacturer)}</td><td>${esc(m.expiry_date||m.expiry)}</td><td><button class="btn danger med-delete" data-id="${m.id}">Delete</button></td></tr>`).join(''):'<tr><td colspan="7">No medicines found.</td></tr>';document.querySelectorAll('.med-delete').forEach(b=>b.onclick=async()=>{if(!confirm('Delete this medicine?'))return;const {error}=await db.from('medicines').delete().eq('id',b.dataset.id);if(error){msg('Medicine delete failed: '+error.message,false);return}msg('Medicine deleted');await loadMedicines()});const low=medicines.filter(m=>Number(m.stock||0)<10);$('lowStock').innerHTML=low.length?low.map(m=>`<p>⚠️ <b>${esc(m.name)}</b> — ${Number(m.stock||0)} left</p>`).join(''):'No low-stock medicines.';$('inventoryBody').innerHTML=medicines.length?medicines.map(m=>`<p><b>${esc(m.name)}</b> — ${Number(m.stock||0)} units <span class="pill">${Number(m.stock||0)===0?'Out of Stock':Number(m.stock||0)<10?'Low Stock':'Available'}</span></p>`).join(''):'No medicines.'}
+async function addMedicine(){const row={name:$('mName').value.trim(),category:$('mCategory').value.trim(),price:Number($('mPrice').value||0),stock:Number($('mStock').value||0),manufacturer:$('mManufacturer').value.trim(),expiry_date:$('mExpiry').value||null};if(!row.name){msg('Medicine name is required.',false);return}const {error}=await db.from('medicines').insert(row);if(error){msg('Could not add medicine: '+error.message,false);return}document.querySelectorAll('#medicines input').forEach(x=>x.value='');msg('Medicine added');await loadMedicines()}
+function renderCustomers(){const map={};orders.forEach(o=>{const k=o.phone||o.customer_name;if(!map[k])map[k]={name:o.customer_name,phone:o.phone,address:o.address,count:0,total:0};map[k].count++;map[k].total+=Number(o.total||0)});const q=($('customerSearch')?.value||'').toLowerCase();$('customersBody').innerHTML=Object.values(map).filter(c=>`${c.name} ${c.phone}`.toLowerCase().includes(q)).map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.phone)}</td><td>${esc(c.address)}</td><td>${c.count}</td><td>${money(c.total)}</td></tr>`).join('')||'<tr><td colspan="5">No customers found.</td></tr>'}
+function renderPayments(){$('paymentsBody').innerHTML=orders.map(o=>`<tr><td>${esc(o.order_id)}</td><td>${esc(o.customer_name)}</td><td>${esc(o.payment_method)}</td><td>${money(o.total)}</td><td>${esc(o.transaction_id||'—')}</td><td>${esc(o.status)}</td></tr>`).join('')||'<tr><td colspan="6">No payments.</td></tr>'}function renderDelivery(){$('deliveryBody').innerHTML=orders.filter(o=>!['Delivered','Cancelled'].includes(o.status)).map(o=>`<tr><td>${esc(o.order_id)}</td><td>${esc(o.customer_name)}</td><td>${esc(o.phone)}</td><td>${esc(o.address)}</td><td>${esc(o.status)}</td></tr>`).join('')||'<tr><td colspan="5">No active deliveries.</td></tr>'}function renderReports(){const sales=orders.reduce((s,o)=>s+Number(o.total||0),0);$('rOrders').textContent=orders.length;$('rSales').textContent=money(sales);$('rAvg').textContent=money(orders.length?sales/orders.length:0);$('rDelivered').textContent=orders.filter(o=>o.status==='Delivered').length}function renderNotifications(){const low=medicines.filter(m=>Number(m.stock||0)<10);const pending=orders.filter(o=>o.status==='Pending');$('notificationsBody').innerHTML=`<div class="alert">🔴 ${pending.length} pending order(s)</div><div class="alert">🟡 ${low.length} low/out-of-stock medicine(s)</div>`}
+function csv(){const rows=[['Order ID','Customer','Phone','Total','Payment','Status','Date'],...orders.map(o=>[o.order_id,o.customer_name,o.phone,o.total,o.payment_method,o.status,o.created_at])];const blob=new Blob([rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='seema-medical-store-orders.csv';a.click();URL.revokeObjectURL(a.href)}
+async function session(){const {data:{session}}=await db.auth.getSession();if(!session){$('loginCard').classList.remove('hidden');$('app').classList.add('hidden');return}if(session.user.email?.toLowerCase()!==ADMIN_EMAIL.toLowerCase()){await db.auth.signOut();$('loginError').textContent='Unauthorized admin account';$('loginError').classList.remove('hidden');return}$('loginCard').classList.add('hidden');$('app').classList.remove('hidden');await load()}
+$('loginForm').onsubmit=async e=>{e.preventDefault();const email=$('email').value.trim(),password=$('password').value;const {error}=await db.auth.signInWithPassword({email,password});if(error){$('loginError').textContent=error.message;$('loginError').classList.remove('hidden');return}await session()};$('logoutBtn').onclick=async()=>{await db.auth.signOut();await session()};document.querySelectorAll('.side button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.side button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$(b.dataset.section).classList.add('active')});$('orderSearch').oninput=renderOrders;$('medicineSearch').oninput=renderMedicines;$('customerSearch').oninput=renderCustomers;$('addMedicine').onclick=addMedicine;$('downloadCsv').onclick=csv;db.auth.onAuthStateChange(()=>session());session();
