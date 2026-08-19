@@ -16,196 +16,53 @@ let cart = [], activeCategory = "All";
 
 const cats = ["All", ...new Set(products.map(p=>p[0]))];
 document.getElementById("categoryTabs").innerHTML = cats.map(c=>`<button class="tab ${c==="All"?"active":""}" onclick="setCategory('${c.replace(/'/g,"\\'")}')">${c}</button>`).join("");
-
-function setCategory(c){
-  activeCategory=c;
-  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.textContent===c));
-  renderProducts();
-}
-function renderProducts(){
-  const q=(document.getElementById("search").value||"").toLowerCase();
-  const filtered=products.filter(p=>(activeCategory==="All"||p[0]===activeCategory)&&(p[1]+" "+p[0]).toLowerCase().includes(q));
-  document.getElementById("productGrid").innerHTML=filtered.map((p,i)=>{
-    const realIndex=products.indexOf(p);
-    return `<article class="product"><div class="category">${p[0]}</div><h3>${p[1]}</h3><p>${p[2]}${p[3]?"":" · Price to be confirmed"}</p><div class="product-bottom"><span class="price">${p[3]?"₹"+p[3]:"Check price"}</span><button class="add" onclick="addToCart(${realIndex})">Add</button></div></article>`
-  }).join("") || "<p>No medicine found.</p>";
-}
-function addToCart(i){
-  const found=cart.find(x=>x.i===i);
-  if(found) found.q++; else cart.push({i,q:1});
-  updateCart();
-}
-function changeQty(i,d){
-  const x=cart.find(x=>x.i===i); if(!x)return;
-  x.q+=d; if(x.q<=0)cart=cart.filter(y=>y.i!==i); updateCart();
-}
+function setCategory(c){activeCategory=c;document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.textContent===c));renderProducts();}
+function renderProducts(){const q=(document.getElementById("search").value||"").toLowerCase();const filtered=products.filter(p=>(activeCategory==="All"||p[0]===activeCategory)&&(p[1]+" "+p[0]).toLowerCase().includes(q));document.getElementById("productGrid").innerHTML=filtered.map(p=>{const realIndex=products.indexOf(p);return `<article class="product"><div class="category">${p[0]}</div><h3>${p[1]}</h3><p>${p[2]}${p[3]?"":" · Price to be confirmed"}</p><div class="product-bottom"><span class="price">${p[3]?"₹"+p[3]:"Check price"}</span><button class="add" onclick="addToCart(${realIndex})">Add</button></div></article>`}).join("")||"<p>No medicine found.</p>";}
+function addToCart(i){const found=cart.find(x=>x.i===i);if(found)found.q++;else cart.push({i,q:1});updateCart();}
+function changeQty(i,d){const x=cart.find(x=>x.i===i);if(!x)return;x.q+=d;if(x.q<=0)cart=cart.filter(y=>y.i!==i);updateCart();}
 function total(){return cart.reduce((s,x)=>s+(products[x.i][3]||0)*x.q,0)}
-function updateCart(){
-  document.getElementById("cartCount").textContent=cart.reduce((s,x)=>s+x.q,0);
-  document.getElementById("cartTotal").textContent="₹"+total();
-  document.getElementById("cartItems").innerHTML=cart.length?cart.map(x=>`<div class="cart-row"><div><strong>${products[x.i][1]}</strong><div class="small">${products[x.i][2]}</div></div><div class="qty"><button onclick="changeQty(${x.i},-1)">−</button> ${x.q} <button onclick="changeQty(${x.i},1)">+</button></div><strong>₹${(products[x.i][3]||0)*x.q}</strong></div>`).join(""):"<p class='muted'>Your cart is empty.</p>";
-}
+function updateCart(){document.getElementById("cartCount").textContent=cart.reduce((s,x)=>s+x.q,0);document.getElementById("cartTotal").textContent="₹"+total();document.getElementById("cartItems").innerHTML=cart.length?cart.map(x=>`<div class="cart-row"><div><strong>${products[x.i][1]}</strong><div class="small">${products[x.i][2]}</div></div><div class="qty"><button onclick="changeQty(${x.i},-1)">−</button> ${x.q} <button onclick="changeQty(${x.i},1)">+</button></div><strong>₹${(products[x.i][3]||0)*x.q}</strong></div>`).join(""):"<p class='muted'>Your cart is empty.</p>";}
 function openCart(){document.getElementById("cartOverlay").classList.add("open");}
 function closeCart(e){if(!e||e.target===document.getElementById("cartOverlay"))document.getElementById("cartOverlay").classList.remove("open");}
-function openCheckout(){
-  if(!cart.length){alert("Please add at least one product.");return;}
-  document.getElementById("cartOverlay").classList.remove("open");
-  document.getElementById("checkoutItems").innerHTML=cart.map(x=>`<div class="summary-line"><span>${products[x.i][1]} × ${x.q}</span><span>₹${(products[x.i][3]||0)*x.q}</span></div>`).join("");
-  document.getElementById("checkoutTotal").textContent="₹"+total();
-  document.getElementById("checkoutOverlay").classList.add("open");
-}
+function openCheckout(){if(!cart.length){alert("Please add at least one product.");return;}document.getElementById("cartOverlay").classList.remove("open");document.getElementById("checkoutItems").innerHTML=cart.map(x=>`<div class="summary-line"><span>${products[x.i][1]} × ${x.q}</span><span>₹${(products[x.i][3]||0)*x.q}</span></div>`).join("");document.getElementById("checkoutTotal").textContent="₹"+total();document.getElementById("checkoutOverlay").classList.add("open");}
 function closeCheckout(e){if(!e||e.target===document.getElementById("checkoutOverlay"))document.getElementById("checkoutOverlay").classList.remove("open");}
 
-async function submitOrder(e) {
+async function submitOrder(e){
   e.preventDefault();
+  if(!cart.length){alert("Please add at least one product.");return;}
+  const items=cart.map(x=>({name:products[x.i][1],pack:products[x.i][2],qty:x.q,price:products[x.i][3]}));
+  const orderId="SMS-"+Date.now().toString().slice(-8);
+  const customerName=document.getElementById("customerName").value.trim();
+  const phone=document.getElementById("customerPhone").value.trim();
+  const address=document.getElementById("address").value.trim();
+  const paymentMethod=document.getElementById("paymentMethod").value;
+  const transactionId=document.getElementById("txn").value.trim();
+  const orderData={order_id:orderId,customer_name:customerName,phone:phone,address:address,payment_method:paymentMethod,transaction_id:transactionId||null,items:items,total:total(),status:"Pending"};
 
-  if (!cart.length) {
-    alert("Please add at least one product.");
-    return;
-  }
-
-  const items = cart.map(x => ({
-    name: products[x.i][1],
-    pack: products[x.i][2],
-    qty: x.q,
-    price: products[x.i][3]
-  }));
-
-  const orderId = "SMS-" + Date.now().toString().slice(-8);
-
-  const customerName = document.getElementById("customerName").value.trim();
-  const phone = document.getElementById("customerPhone").value.trim();
-  const address = document.getElementById("address").value.trim();
-  const paymentMethod = document.getElementById("paymentMethod").value;
-  const transactionId = document.getElementById("txn").value.trim();
-
-  const orderData = {
-    order_id: orderId,
-    customer_name: customerName,
-    phone: phone,
-    address: address,
-    payment_method: paymentMethod,
-    transaction_id: transactionId || null,
-    items: items,
-    total: total(),
-    status: "Pending"
-  };
-
-  try {
-    const db = window.supabase.createClient(
-      window.SUPABASE_URL,
-      window.SUPABASE_ANON_KEY
-    );
-
-    const { error: customerError } = await db
-      .from("customers")
-      .insert([{
-        name: customerName,
-        phone: phone,
-        address: address
-      }]);
-
-    if (customerError) {
-      console.error("Customer error:", customerError);
-    }
-
-    const { error: orderError } = await db
-      .from("orders")
-      .insert([orderData]);
-
-    if (orderError) {
-      console.error("Order error:", orderError);
-      throw orderError;
-    }
-
-    document.getElementById("orderForm").hidden = true;
-    document.getElementById("orderSuccess").hidden = false;
-
-    document.getElementById("orderSuccess").innerHTML = `
-      <strong>Order submitted successfully!</strong>
-      <br><br>
-      Order ID: <strong>${orderId}</strong>
-      <br>
-      Total: <strong>₹${orderData.total}</strong>
-      <br><br>
-      Your order has been received by Seema Medical Store.
-      The store will verify your order and payment before processing.
-    `;
-
-    cart = [];
-    updateCart();
-
-  } catch (error) {
-    console.error("Order submission failed:", error);
-    alert("Unable to submit the order. Please try again.");
+  try{
+    const db=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+    const {error:customerError}=await db.from("customers").insert([{name:customerName,phone:phone,address:address}]);
+    if(customerError)console.error("Customer error:",customerError);
+    const {error:orderError}=await db.from("orders").insert([orderData]);
+    if(orderError){console.error("Order error:",orderError);throw orderError;}
+    document.getElementById("orderForm").hidden=true;document.getElementById("orderSuccess").hidden=false;document.getElementById("orderSuccess").innerHTML=`<strong>Order submitted successfully!</strong><br><br>Order ID: <strong>${orderId}</strong><br>Total: <strong>₹${orderData.total}</strong><br><br>Your order has been received by Seema Medical Store. The store will verify your order and payment before processing.`;cart=[];updateCart();
+  }catch(error){
+    console.error("Order submission failed:",error);
+    const msg=error?.message||error?.details||"Unknown database error";
+    alert("Order failed: " + msg);
   }
 }
 
-async function trackOrder() {
-  const orderId = document.getElementById("trackingOrderId").value.trim();
-  const phone = document.getElementById("trackingPhone").value.trim();
-  const result = document.getElementById("trackingResult");
-
-  if (!orderId || !phone) {
-    result.innerHTML = "<p>Please enter Order ID and mobile number.</p>";
-    return;
-  }
-
-  result.innerHTML = "<p>Checking your order...</p>";
-
-  try {
-    const db = window.supabase.createClient(
-      window.SUPABASE_URL,
-      window.SUPABASE_ANON_KEY
-    );
-
-    const { data, error } = await db.rpc("track_order", {
-      p_order_id: orderId,
-      p_phone: phone
-    });
-
-    if (error) {
-      console.error(error);
-      result.innerHTML = "<p>Unable to track the order. Please try again.</p>";
-      return;
-    }
-
-    if (!data || data.length === 0) {
-      result.innerHTML = "<p><strong>Order not found.</strong><br>Please check your Order ID and mobile number.</p>";
-      return;
-    }
-
-    const order = data[0];
-
-    const statuses = [
-      "Pending",
-      "Confirmed",
-      "Packed",
-      "Out for Delivery",
-      "Delivered"
-    ];
-
-    const currentIndex = statuses.indexOf(order.status);
-
-    result.innerHTML = `
-      <div class="tracking-card">
-        <h3>Order ${order.order_id}</h3>
-        <p><strong>Customer:</strong> ${order.customer_name}</p>
-        <p><strong>Total:</strong> ₹${order.total}</p>
-        <p><strong>Payment:</strong> ${order.payment_method}</p>
-        <div class="tracking-status">
-          ${statuses.map((status, index) => `
-            <div class="${index <= currentIndex ? "completed" : ""}">
-              <span>${index <= currentIndex ? "✓" : "○"}</span>
-              <strong>${status}</strong>
-            </div>
-          `).join("")}
-        </div>
-        <h3>Current Status: ${order.status}</h3>
-      </div>
-    `;
-  } catch (error) {
-    console.error(error);
-    result.innerHTML = "<p>Something went wrong. Please try again.</p>";
-  }
+async function trackOrder(){
+  const orderId=document.getElementById("trackingOrderId").value.trim();const phone=document.getElementById("trackingPhone").value.trim();const result=document.getElementById("trackingResult");
+  if(!orderId||!phone){result.innerHTML="<p>Please enter Order ID and mobile number.</p>";return;}
+  result.innerHTML="<p>Checking your order...</p>";
+  try{
+    const db=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+    const {data,error}=await db.rpc("track_order",{p_order_id:orderId,p_phone:phone});
+    if(error){console.error(error);result.innerHTML="<p>Unable to track the order: "+error.message+"</p>";return;}
+    if(!data||data.length===0){result.innerHTML="<p><strong>Order not found.</strong><br>Please check your Order ID and mobile number.</p>";return;}
+    const order=data[0];const statuses=["Pending","Confirmed","Packed","Out for Delivery","Delivered"];const currentIndex=statuses.indexOf(order.status);
+    result.innerHTML=`<div class="tracking-card"><h3>Order ${order.order_id}</h3><p><strong>Customer:</strong> ${order.customer_name}</p><p><strong>Total:</strong> ₹${order.total}</p><p><strong>Payment:</strong> ${order.payment_method}</p><div class="tracking-status">${statuses.map((status,index)=>`<div class="${index<=currentIndex?"completed":""}"><span>${index<=currentIndex?"✓":"○"}</span><strong>${status}</strong></div>`).join("")}</div><h3>Current Status: ${order.status}</h3></div>`;
+  }catch(error){console.error(error);result.innerHTML="<p>Tracking error: "+(error?.message||"Unknown error")+"</p>";}
 }
