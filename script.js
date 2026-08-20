@@ -15,6 +15,7 @@ async function loadMedicines(){
     (data||[]).forEach(m=>products.push([m.category||"Other",m.name,"Available stock: "+(m.stock??0),Number(m.price)||0,m]));
     buildCategories();
     renderProducts();
+    processMedicineDeepLink();
   }catch(error){
     medicineLoadError=error.message||"Unable to load medicines.";
     console.error("MEDICINE LOAD ERROR",error);
@@ -24,7 +25,7 @@ async function loadMedicines(){
 }
 function buildCategories(){
   const cats=["All",...new Set(products.map(p=>p[0]))];
-  document.getElementById("categoryTabs").innerHTML=cats.map(c=>`<button class="tab ${c==="All"?"active":""}" onclick="setCategory('${c.replace(/'/g,"\\'")}')">${c}</button>`).join("");
+  document.getElementById("categoryTabs").innerHTML=cats.map(c=>c==="Diabetes"?`<a class="tab" href="diabetes.html">Diabetes</a>`:`<button class="tab ${c==="All"?"active":""}" onclick="setCategory('${c.replace(/'/g,"\\'")}')">${c}</button>`).join("");
 }
 function setCategory(c){activeCategory=c;document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.textContent===c));renderProducts()}
 function renderProducts(){
@@ -34,6 +35,17 @@ function renderProducts(){
     const i=products.indexOf(p), stock=Number(p[4]?.stock??0);
     return `<article class="product"><div class="category">${p[0]}</div><h3>${p[1]}</h3><p>${p[2]}</p>${p[4]?.manufacturer?`<p class="small">${p[4].manufacturer}</p>`:""}<div class="product-bottom"><span class="price">${p[3]?"₹"+p[3]:"Check price"}</span><button class="add" ${stock<=0?"disabled":""} onclick="addToCart(${i})">${stock<=0?"Out of Stock":"Add"}</button></div></article>`
   }).join("")||"<p>No medicine found.</p>";
+}
+function processMedicineDeepLink(){
+  const params=new URLSearchParams(window.location.search),id=params.get("addMedicineId");
+  if(!id)return;
+  const i=products.findIndex(p=>String(p[4]?.id)===String(id));
+  if(i<0){alert("Medicine is not available.");history.replaceState({},document.title,"index.html#products");return}
+  const stock=Number(products[i][4]?.stock??0),price=Number(products[i][3]||0);
+  if(stock<=0||price<=0){alert("This medicine is currently unavailable or its store price has not been set.");history.replaceState({},document.title,"index.html#products");return}
+  addToCart(i);
+  history.replaceState({},document.title,"index.html#products");
+  setTimeout(openCart,150);
 }
 function addToCart(i){const stock=Number(products[i][4]?.stock??0),f=cart.find(x=>x.i===i);if(stock<=0)return;if(f&&f.q>=stock){alert("Only "+stock+" unit(s) available.");return}if(f)f.q++;else cart.push({i,q:1});updateCart()}
 function changeQty(i,d){const x=cart.find(x=>x.i===i);if(!x)return;const stock=Number(products[i][4]?.stock??0);if(d>0&&x.q>=stock){alert("Only "+stock+" unit(s) available.");return}x.q+=d;if(x.q<=0)cart=cart.filter(y=>y.i!==i);updateCart()}
@@ -92,7 +104,7 @@ async function submitOrder(e){
   const orderResult=await db.from("orders").insert(payload);
   if(orderResult.error){await rollbackStock(db,reservations);reservations=[];throw new Error(orderResult.error.message+(orderResult.error.details?" — "+orderResult.error.details:""));}
   document.getElementById("orderForm").hidden=true;document.getElementById("orderSuccess").hidden=false;document.getElementById("orderSuccess").innerHTML=`<strong>Order submitted successfully!</strong><br><br>Order ID: <strong>${orderId}</strong><br>Total: <strong>₹${orderTotal}</strong><br>Payment: <strong>${payment==="UPI"?"UPI / QR — UTR recorded":"Cash on Delivery"}</strong><br><br>Stock has been updated automatically.<br><br>Keep this Order ID to track your order.<br><br><button type="button" class="primary" onclick="startAnotherOrder()">🛒 Place Another Order</button>`;cart=[];updateCart();await loadMedicines();
- }catch(error){console.error("ORDER SUBMISSION ERROR",error);if(reservations.length)await rollbackStock(window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY),reservations);alert(error.message||"Unable to submit the order.")}finally{if(button){button.disabled=false;button.textContent="Confirm & Place Order"}}
+ }catch(error){console.error("ORDER SUBMISSION ERROR",error);if(reservations.length)await rollbackStock(window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY),reservations);alert(error.message||"Unable to submit the order")}finally{if(button){button.disabled=false;button.textContent="Confirm & Place Order"}}
 }
 function startAnotherOrder(){document.getElementById("checkoutOverlay").classList.remove("open");resetCheckoutForm();window.location.hash="products"}
 async function trackOrder(){const orderId=document.getElementById("trackingOrderId").value.trim(),phone=document.getElementById("trackingPhone").value.trim(),result=document.getElementById("trackingResult");if(!orderId||!phone){result.innerHTML="<p>Please enter Order ID and mobile number.</p>";return}result.innerHTML="<p>Checking your order...</p>";try{const db=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);const {data,error}=await db.rpc("track_order",{p_order_id:orderId,p_phone:phone});if(error)throw error;if(!data||!data.length){result.innerHTML="<p><strong>Order not found.</strong><br>Check the Order ID and mobile number.</p>";return}const o=data[0],statuses=["Pending","Confirmed","Packed","Out for Delivery","Delivered"],idx=statuses.indexOf(o.status);result.innerHTML=`<div class="tracking-card"><h3>Order ${o.order_id}</h3><p><strong>Customer:</strong> ${o.customer_name}</p><p><strong>Total:</strong> ₹${o.total}</p><p><strong>Payment:</strong> ${o.payment_method}</p><div class="tracking-status">${statuses.map((s,i)=>`<div class="${i<=idx?"completed":""}"><span>${i<=idx?"✓":"○"}</span><strong>${s}</strong></div>`).join("")}</div><h3>Current Status: ${o.status}</h3></div>`}catch(error){result.innerHTML="<p>Tracking error: "+(error.message||"Unknown error")+"</p>"}}
