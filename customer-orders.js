@@ -39,6 +39,12 @@
     if(window.seemaCustomerAuth){
       window.seemaCustomerAuth.auth.onAuthStateChange((event)=>{if(event==='SIGNED_IN'||event==='SIGNED_OUT')setTimeout(()=>{if(event==='SIGNED_IN')window.openMyOrders();},150);});
     }
+    if(!document.getElementById('customer-dashboard-loader')){
+      const script=document.createElement('script');
+      script.id='customer-dashboard-loader';
+      script.src='customer-dashboard.js?v=20260820-01';
+      document.body.appendChild(script);
+    }
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup();
 })();
