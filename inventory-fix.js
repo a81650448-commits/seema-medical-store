@@ -28,7 +28,7 @@
     if(!side||!main)return;
     const btn=document.createElement('button');btn.type='button';btn.dataset.section='stock-purchase';btn.textContent='📥 Stock Purchase';side.appendChild(btn);
     const section=document.createElement('section');section.id='stock-purchase';section.className='section';
-    section.innerHTML=`<h2>Stock Purchase</h2><div class="card"><h3>Add Stock Purchased from Supplier</h3><p class="muted">Use this module when new medicine stock arrives. It increases the existing stock; it does not change the selling price.</p><div class="formgrid"><label>Supplier Name<input id="purchaseSupplier" class="input" placeholder="Supplier name"></label><label>Supplier Invoice No.<input id="purchaseInvoice" class="input" placeholder="Invoice number"></label><label>Purchase Date<input id="purchaseDate" class="input" type="date"></label><label>Medicine<select id="purchaseMedicine" class="select"><option value="">Select medicine</option></select></label><label>Quantity Purchased<input id="purchaseQty" class="input" type="number" min="1" value="1"></label><label>Purchase Price / Unit<input id="purchasePrice" class="input" type="number" min="0" step="0.01" placeholder="Optional"></label></div><br><button id="saveStockPurchase" class="btn primary" type="button">Add Stock</button></div><div class="card"><h3>Recent Stock Purchases</h3><div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Supplier</th><th>Invoice</th><th>Medicine</th><th>Qty</th><th>Purchase Price</th><th>Total</th></tr></thead><tbody id="purchaseHistoryBody"></tbody></table></div></div>`;
+    section.innerHTML=`<h2>Stock Purchase</h2><div class="card"><h3>Add Stock Purchased from Supplier</h3><p class="muted">Use this module when new medicine stock arrives. It increases the existing stock; it does not change the selling price.</p><div class="formgrid"><label>Supplier Name<input id="purchaseSupplier" class="input" placeholder="Supplier name"></label><label>Supplier Invoice No.<input id="purchaseInvoice" class="input" placeholder="Invoice number"></label><label>Purchase Date<input id="purchaseDate" class="input" type="date"></label><label>Medicine<select id="purchaseMedicine" class="select"><option value="">Loading medicines...</option></select></label><label>Quantity Purchased<input id="purchaseQty" class="input" type="number" min="1" value="1"></label><label>Purchase Price / Unit<input id="purchasePrice" class="input" type="number" min="0" step="0.01" placeholder="Optional"></label></div><br><button id="saveStockPurchase" class="btn primary" type="button">Add Stock</button></div><div class="card"><h3>Recent Stock Purchases</h3><div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Supplier</th><th>Invoice</th><th>Medicine</th><th>Qty</th><th>Purchase Price</th><th>Total</th></tr></thead><tbody id="purchaseHistoryBody"></tbody></table></div></div>`;
     main.appendChild(section);
     const today=new Date();today.setMinutes(today.getMinutes()-today.getTimezoneOffset());document.getElementById('purchaseDate').value=today.toISOString().slice(0,10);
     btn.onclick=()=>{document.querySelectorAll('.side button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));section.classList.add('active');fillPurchaseMedicine();renderPurchaseHistory();};
@@ -36,13 +36,27 @@
     fillPurchaseMedicine();renderPurchaseHistory();
   }
 
-  function fillPurchaseMedicine(){const e=document.getElementById('purchaseMedicine');const list=typeof medicines!=='undefined'?medicines:[];if(!e||!Array.isArray(list))return;e.innerHTML='<option value="">Select medicine</option>'+list.map(m=>`<option value="${m.id}">${esc(m.name)} — Current Stock ${Number(m.stock||0)}</option>`).join('');}
+  async function fillPurchaseMedicine(){
+    const e=document.getElementById('purchaseMedicine');
+    if(!e)return;
+    let list=Array.isArray(window.medicines)?window.medicines:[];
+    if(!list.length && window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY){
+      try{
+        const client=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+        const r=await client.from('medicines').select('*').order('name');
+        if(!r.error){list=r.data||[];window.medicines=list;}
+      }catch(err){}
+    }
+    if(!list.length){e.innerHTML='<option value="">No medicines available — add medicine first</option>';return;}
+    e.innerHTML='<option value="">Select medicine</option>'+list.map(m=>`<option value="${m.id}">${esc(m.name)} — Current Stock ${Number(m.stock||0)}</option>`).join('');
+  }
+
   function purchaseHistory(){try{return JSON.parse(localStorage.getItem('seema_stock_purchases')||'[]')}catch(e){return[]}}
   function renderPurchaseHistory(){const body=document.getElementById('purchaseHistoryBody');if(!body)return;const rows=purchaseHistory();body.innerHTML=rows.length?rows.slice().reverse().slice(0,50).map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.supplier)}</td><td>${esc(x.invoice||'—')}</td><td>${esc(x.medicine)}</td><td>${Number(x.qty)}</td><td>${x.price?money(x.price):'—'}</td><td>${x.price?money(Number(x.price)*Number(x.qty)):'—'}</td></tr>`).join(''):'<tr><td colspan="7">No stock purchases recorded yet.</td></tr>';}
   async function saveStockPurchase(){
     const id=document.getElementById('purchaseMedicine')?.value;const qty=Math.max(0,Number(document.getElementById('purchaseQty')?.value||0));
     if(!id){msg('Select a medicine.',false);return}if(!qty){msg('Enter a valid purchase quantity.',false);return}
-    const list=typeof medicines!=='undefined'?medicines:[];const m=Array.isArray(list)?list.find(x=>String(x.id)===String(id)):null;if(!m){msg('Medicine not found. Reload inventory.',false);return}
+    const m=Array.isArray(window.medicines)?window.medicines.find(x=>String(x.id)===String(id)):null;if(!m){msg('Medicine not found. Reload inventory.',false);return}
     const next=Number(m.stock||0)+qty;const r=await db.from('medicines').update({stock:next}).eq('id',id);
     if(r.error){msg('Stock purchase failed: '+r.error.message,false);return}
     const rec={date:document.getElementById('purchaseDate').value||new Date().toISOString().slice(0,10),supplier:document.getElementById('purchaseSupplier').value.trim()||'Not specified',invoice:document.getElementById('purchaseInvoice').value.trim(),medicine:m.name,medicine_id:m.id,qty,price:Number(document.getElementById('purchasePrice').value||0)||0};
@@ -55,5 +69,7 @@
     setupInventorySearch();setupStockPurchase();
     document.querySelectorAll('.side button[data-section="inventory"]').forEach(function(btn){btn.addEventListener('click',function(){refreshInventory();setTimeout(setupInventorySearch,100);});});
     setTimeout(setupInventorySearch,300);
+    setTimeout(fillPurchaseMedicine,800);
+    setTimeout(fillPurchaseMedicine,2000);
   });
 })();
