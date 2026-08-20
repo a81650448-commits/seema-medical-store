@@ -12,3 +12,11 @@ window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXB
   s.defer=true;
   document.head.appendChild(s);
 })();
+
+// Replace the category-page placeholder illustrations with actual medicine packaging images.
+(function(){
+  const s=document.createElement('script');
+  s.src='medicine-images.js?v=20260820-01';
+  s.defer=true;
+  document.head.appendChild(s);
+})();
