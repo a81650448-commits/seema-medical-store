@@ -53,3 +53,20 @@
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
+
+(function addAnandTechnicalSolutionWatermark(){
+  function add(){
+    if(document.querySelector('.ats-watermark')) return;
+    const wrap=document.createElement('div');
+    wrap.className='ats-watermark';
+    wrap.setAttribute('aria-label','Anand Technical Solution');
+    wrap.style.cssText='position:fixed;right:18px;bottom:16px;width:150px;z-index:99999;pointer-events:none;opacity:.92;filter:drop-shadow(0 3px 8px rgba(0,0,0,.14));background:rgba(255,255,255,.94);border-radius:14px;padding:6px;box-sizing:border-box;';
+    const img=document.createElement('img');
+    img.src='anand-technical-solution-logo.svg';
+    img.alt='Anand Technical Solution';
+    img.style.cssText='display:block;width:100%;height:auto;border-radius:10px;';
+    wrap.appendChild(img);
+    document.body.appendChild(wrap);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',add); else add();
+})();
