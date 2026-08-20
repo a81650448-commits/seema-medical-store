@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Diabetes medicines at Seema Medical Store">
+<title>Diabetes Medicines | Seema Medical Store</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="style.css?v=20260820-03">
+<style>
+.diabetes-page{max-width:1180px;margin:0 auto;padding:38px 24px 70px}.diabetes-hero{display:flex;align-items:center;justify-content:space-between;gap:24px;background:#eaf6f0;border:1px solid #cfe7db;border-radius:24px;padding:30px;margin-bottom:30px}.diabetes-hero h1{margin:4px 0 8px;font-size:42px}.diabetes-hero p{margin:0;color:#52625b}.diabetes-icon{width:90px;height:90px;border-radius:22px;background:#fff;display:grid;place-items:center;font-size:48px;border:1px solid #d6e9df}.medicine-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}.medicine-card{background:#fff;border:1px solid #d9e5df;border-radius:20px;overflow:hidden;display:flex;flex-direction:column}.medicine-image{height:210px;background:#f5faf7;display:grid;place-items:center;border-bottom:1px solid #e2ece7}.medicine-image svg{width:88%;height:88%;max-height:190px}.medicine-info{padding:18px}.medicine-info h2{font-size:21px;margin:0 0 8px}.medicine-meta{font-size:14px;color:#63716c;margin:5px 0}.stock{font-weight:700;margin:12px 0}.stock.available{color:#087c49}.stock.empty{color:#a33b27}.medicine-price{font-size:22px;font-weight:800;color:#b42318;margin:12px 0}.medicine-actions{display:flex;gap:10px}.medicine-actions button,.medicine-actions a{flex:1;text-align:center;text-decoration:none}.medicine-actions button[disabled]{opacity:.55;cursor:not-allowed}.rx-note{margin-top:28px;padding:16px 18px;background:#fff6df;border:1px solid #ecd59a;border-radius:14px;color:#684d12}.back-link{display:inline-block;margin-bottom:18px;color:#087c49;font-weight:700;text-decoration:none}@media(max-width:850px){.medicine-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.diabetes-hero h1{font-size:34px}}@media(max-width:560px){.medicine-grid{grid-template-columns:1fr}.diabetes-hero{padding:22px}.diabetes-hero h1{font-size:30px}.diabetes-icon{width:68px;height:68px;font-size:36px}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a href="index.html" class="brand" style="text-decoration:none;color:inherit"><div class="logo">✚</div><div><strong>SEEMA</strong><span>MEDICAL STORE</span></div></a>
+  <nav><a href="index.html#products">Medicines</a><a href="index.html#how">How to Order</a><a href="index.html#contact">Contact</a><a class="secondary" href="index.html">Back to Store</a></nav>
+</header>
+<main class="diabetes-page">
+  <a class="back-link" href="index.html">← Back to Store</a>
+  <section class="diabetes-hero">
+    <div><p class="eyebrow">MEDICINE CATEGORY</p><h1>Diabetes</h1><p>Diabetes medicines with live stock and price information from Seema Medical Store.</p></div>
+    <div class="diabetes-icon" aria-label="Diabetes category">🩸</div>
+  </section>
+  <div id="diabetesStatus" class="muted">Loading Diabetes medicines...</div>
+  <section id="medicineGrid" class="medicine-grid" aria-live="polite"></section>
+  <div class="rx-note"><strong>Prescription medicines:</strong> These medicines may require a valid prescription and pharmacist verification before supply. Do not self-medicate.</div>
+</main>
+<footer>© 2026 Seema Medical Store</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js?v=20260820-01"></script>
+<script>
+const db=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+const grid=document.getElementById('medicineGrid'),statusBox=document.getElementById('diabetesStatus');
+function esc(v){return String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]))}
+function imageSvg(name,index){const labels=['GP1','AMARYL','GALVUS','FORXIGA','GP','LANTUS'];const label=labels[index]||'MEDICINE';const isLantus=index===5;return `<svg viewBox="0 0 320 190" role="img" aria-label="AI-style illustration of ${esc(name)}"><rect x="55" y="32" width="210" height="112" rx="8" fill="#fff" stroke="#b9d5c7" stroke-width="3"/><rect x="55" y="32" width="210" height="22" rx="8" fill="#087c49"/><text x="70" y="48" font-family="Arial" font-size="11" fill="#fff">SEEMA MEDICAL STORE</text><text x="160" y="88" text-anchor="middle" font-family="Arial" font-size="25" font-weight="700" fill="#123">${label}</text><text x="160" y="111" text-anchor="middle" font-family="Arial" font-size="12" fill="#52625b">DIABETES CARE</text>${isLantus?'<circle cx="160" cy="136" r="12" fill="#eaf6f0" stroke="#087c49"/><rect x="156" y="126" width="8" height="20" fill="#087c49"/>':'<rect x="95" y="126" width="130" height="8" rx="4" fill="#d7ece2"/>'}</svg>`}
+async function load(){try{const {data,error}=await db.from('medicines').select('id,name,category,price,stock,manufacturer').eq('category','Diabetes').order('name');if(error)throw error;if(!data?.length){statusBox.textContent='No Diabetes medicines have been added yet. Run diabetes-medicines.sql in Supabase SQL Editor.';return}statusBox.textContent=`${data.length} Diabetes medicine(s)`;grid.innerHTML=data.map((m,i)=>{const stock=Number(m.stock||0),price=Number(m.price||0);return `<article class="medicine-card"><div class="medicine-image">${imageSvg(m.name,i)}</div><div class="medicine-info"><h2>${esc(m.name)}</h2><p class="medicine-meta">${esc(m.manufacturer||'')}</p><p class="stock ${stock>0?'available':'empty'}">Available stock: ${stock}</p><div class="medicine-price">${price>0?'₹'+price.toFixed(2):'Price not set'}</div><div class="medicine-actions"><button class="primary" ${stock<=0||price<=0?'disabled':''} onclick="addToCart('${encodeURIComponent(m.id)}')">${stock<=0?'Out of Stock':'Add to Cart'}</button></div></div></article>`}).join('')}catch(e){console.error(e);statusBox.textContent='Unable to load Diabetes medicines. Please refresh the page.'}}
+function addToCart(id){window.location.href='index.html?addMedicineId='+id}
+load();
+</script>
+</body>
+</html>
