@@ -73,3 +73,34 @@
     setTimeout(fillPurchaseMedicine,2000);
   });
 })();
+
+(function(){
+  const style=document.createElement('style');
+  style.textContent='.notification-item{padding:13px 15px;border-radius:9px;background:#fff7ed;margin-bottom:12px;cursor:pointer;transition:.15s}.notification-item:hover{transform:translateY(-1px)}.notification-details{display:none;background:#fff;border:1px solid #e4e7ec;border-radius:9px;padding:14px;margin:-4px 0 12px}.notification-details.open{display:block}.notification-details table{width:100%;border-collapse:collapse}.notification-details th,.notification-details td{padding:9px;border-bottom:1px solid #eee;text-align:left}.notification-details th{background:#f8fafc}.notification-empty{color:#667085;padding:6px 0}';
+  document.head.appendChild(style);
+  function row(title,count,icon,id,html){return `<div class="notification-item" data-notification="${id}">${icon} <b>${count}</b> ${title}<span style="float:right">▼</span></div><div id="notification-${id}" class="notification-details">${html}</div>`}
+  function table(headers,rows){if(!rows.length)return '<div class="notification-empty">No matching records.</div>';return `<div class="table-wrap"><table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`}
+  function renderNotificationDetails(){
+    const body=document.getElementById('notificationsBody');
+    if(!body)return;
+    const low=medicines.filter(m=>Number(m.stock||0)<10);
+    const ex=medicines.filter(m=>expiry(m.expiry_date||m.expiry)[1]==='expired');
+    const soon=medicines.filter(m=>expiry(m.expiry_date||m.expiry)[1]==='low');
+    const pending=orders.filter(o=>o.status==='Pending');
+    const pendingRows=pending.map(o=>`<tr><td><b>${esc(o.order_id)}</b></td><td>${esc(o.customer_name)}</td><td>${esc(o.phone)}</td><td>${money(o.total)}</td><td>${esc(o.created_at?new Date(o.created_at).toLocaleString('en-IN'):'—')}</td></tr>`);
+    const lowRows=low.map(m=>`<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.category||'—')}</td><td>${Number(m.stock||0)}</td><td>${esc(m.manufacturer||'—')}</td></tr>`);
+    const exRows=ex.map(m=>{const e=expiry(m.expiry_date||m.expiry);return `<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.category||'—')}</td><td>${esc(m.expiry_date||m.expiry||'—')}</td><td>${esc(e[0])}</td><td>${Number(m.stock||0)}</td></tr>`});
+    const soonRows=soon.map(m=>{const e=expiry(m.expiry_date||m.expiry);return `<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.category||'—')}</td><td>${esc(m.expiry_date||m.expiry||'—')}</td><td>${esc(e[0])}</td><td>${Number(m.stock||0)}</td></tr>`});
+    body.innerHTML=
+      row('pending order(s)',pending.length,'🔴','pending',table(['Order','Customer','Phone','Amount','Date'],pendingRows))+\
+      row('low/out-of-stock medicine(s)',low.length,'🟡','low',table(['Medicine','Category','Stock','Manufacturer'],lowRows))+\
+      row('expired medicine(s)',ex.length,'⚠️','expired',table(['Medicine','Category','Expiry','Status','Stock'],exRows))+\
+      row('medicine(s) expire within 30 days',soon.length,'📅','soon',table(['Medicine','Category','Expiry','Status','Stock'],soonRows));
+    body.querySelectorAll('.notification-item').forEach(item=>item.onclick=()=>{
+      const target=document.getElementById('notification-'+item.dataset.notification);
+      if(target)target.classList.toggle('open');
+    });
+  }
+  window.renderNotifications=renderNotificationDetails;
+  window.addEventListener('load',()=>setTimeout(renderNotificationDetails,500));
+})();
