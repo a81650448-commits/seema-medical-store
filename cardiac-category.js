@@ -7,6 +7,7 @@
     tabs.querySelectorAll('.tab').forEach(function(tab){
       const name=(tab.textContent||'').trim();
       const href={
+        'All':'all-medicines.html',
         'Diabetes':'diabetes.html',
         'Cardiac Care':'cardiac-care.html',
         'Stomach Care':'stomach-care.html',
