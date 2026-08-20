@@ -13,10 +13,10 @@ window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXB
   document.head.appendChild(s);
 })();
 
-// Replace the category-page placeholder illustrations with actual medicine packaging images.
+// Actual medicine packaging images with a proxy fallback for GitHub Pages.
 (function(){
   const s=document.createElement('script');
-  s.src='medicine-images.js?v=20260820-01';
+  s.src='medicine-images.js?v=20260820-02';
   s.defer=true;
   document.head.appendChild(s);
 })();
