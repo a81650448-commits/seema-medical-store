@@ -7,7 +7,7 @@ window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXB
 
 (function(){
   const s=document.createElement('script');
-  s.src='billing.js?v=20260821-02';
+  s.src='billing.js?v=20260821-03';
   s.defer=true;
   document.head.appendChild(s);
 })();
@@ -19,11 +19,20 @@ window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXB
   document.head.appendChild(s);
 })();
 
-// Stable admin-only product price/stock controls.
+// Admin-only medicine editor.
 (function(){
-  if(!/admin\\.html$/i.test(window.location.pathname)) return;
+  if(!/admin\\.html$/i.test(window.location.pathname))return;
   const s=document.createElement('script');
-  s.src='product-control-fixed.js?v=20260821-01';
+  s.src='product-control-fixed.js?v=20260821-02';
+  s.defer=true;
+  document.head.appendChild(s);
+})();
+
+// Customer website expiry display; it reads the same medicines table.
+(function(){
+  if(/admin\\.html$/i.test(window.location.pathname))return;
+  const s=document.createElement('script');
+  s.src='medicine-website-sync.js?v=20260821-01';
   s.defer=true;
   document.head.appendChild(s);
 })();
