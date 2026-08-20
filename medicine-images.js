@@ -1,6 +1,6 @@
 // Actual medicine packaging images for Seema Medical Store category pages.
-// Images are loaded from pharmacy/product listings. If one source changes,
-// the fallback URL in the onerror handler keeps the card from showing a broken image.
+// Images are routed through a public image proxy first so pharmacy sites
+// that block browser hot-linking do not leave broken cards on GitHub Pages.
 (function(){
   const images={
     'amaryl':'https://images.apollo247.in/pub/media/catalog/product/A/M/AMA0005_1_1.jpg?tr=q-85%2Cf-webp%2Cw-200%2Cdpr-3%2Cc-at_max+200w',
@@ -8,30 +8,34 @@
     'galvus':'https://ik.imagekit.io/wlfr/wellness/images/products/353639-1.jpg',
     'glycomet gp1':'https://cdn01.pharmeasy.in/dam/productsnowatermark/085768/glycomet-gp-1mg-strip-of-15-tablets-front-2-1756904770-non-watermarked.jpg',
     'glycomet-gp':'https://mcareexports.com/wp-content/uploads/2021/06/Glycomet-GP-1mg-tab.jpg',
-    'lantus':'https://img3.exportersindia.com/product_images/bc-full/2022/5/9921597/lantus-solostar-insulin-pen-1652173971-6332320.jpeg',
+    'lantus':'https://ik.imagekit.io/wlfr/wellness/images/products/219534-1.jpg',
     'aldactone':'https://www.netforhealth.com/wp-content/uploads/2016/09/aldactone-25-500x500-400x400.jpg',
     'amlong':'https://images.apollo247.in/pub/media/catalog/product/A/M/AML0050_1_2.jpg?tr=q-80',
     'atorva 10':'https://meds.myupchar.com/145151/1.jpg',
     'ecosprin':'https://cpimg.tistatic.com/10351405/b/4/75-MG-Gastro-Resistant-Tablets-IP..jpg',
     'lasix':'https://tiimg.tistatic.com/fp/1/007/253/furosemide-40-mg-high-blood-pressure-tablets-922.jpg',
     'rosuvas':'https://www.pharmaright.vu/i-l-1152-rosuvas-tablets-10mg.jpeg',
-    'telma':'https://d1s24u4ln0wd0i.cloudfront.net/med/12999/TELMA%2020MG%20TAB%201X15_1.webp',
+    'telma':'https://meds.myupchar.com/138509/1.jpg',
     'cremaffin':'https://meds.myupchar.com/127384/qret0b2brbqx3ewsa4im.jpg',
     'digene':'https://api.chemist180.com/api/media/image-resize/?name=DIGENE_ORANGE_TABLET_chemist180.jpg&path=Product+Images%2F',
     'enterogermina':'https://imgwlns.gumlet.io/images/products/227429-1.JPG',
     'omez-d':'https://meds.myupchar.com/145004/1.jpg',
     'pan-d':'https://shreedashrath.com/wp-content/uploads/2021/06/pand2.jpg',
+    'pantop 40':'https://cmedia.cheapmedicineshop.com/media/catalog/product/cache/626c3b3f08206a0163ceb01a22c7c3d3/p/a/pantop_40_mg_with_pantoprazole_gastro-resistant.png',
     'pantocid dsr':'https://cdn01.pharmeasy.in/dam/productsnowatermark/I07747/pantocid-dsr-strip-of-15-capsules-side-6.2-1756904258-non-watermarked.jpg',
     'unienzyme':'https://images.apollo247.in/pub/media/catalog/product/U/N/UNI0005_1_1.jpg?tr=q-80',
     'vizylac':'https://www.bbassets.com/media/uploads/p/l/1200003126_2-vizylac-capsule-for-stomach-care-restores-intestinal-flora-intestinal-immunity.jpg',
     'amlycure d.s.':'https://meds.myupchar.com/126321/1.jpg',
     'hepano':'https://i.ebayimg.com/00/s/MTUwMFgxNTAw/z/tmAAAOSwiXRkgaRS/%24_57.JPG?set_id=880000500F',
     'liv.52':'https://sklep.sfd.pl/produkt_img/d41d8cd98f00b204e9800998ecf8427ed41d8cd98f00b204e9800998ecf8427eLiv.52_i37914_d1200x1200.png',
-    'silibon':'https://images.apollo247.in/pub/media/catalog/product/s/i/sil0009.jpg?tr=q-80%2Cf-webp%2Cw-400%2Cdpr-3%2Cc-at_max+400w',
+    'silibon':'https://ik.imagekit.io/wlfr/wellness/images/products/211514-1.jpg',
     'sorbiline':'https://cdn01.pharmeasy.in/dam/productsnowatermark/161705/sorbiline-bottle-of-100ml-syrup-combo-3-1756827327-non-watermarked.jpg',
     'udiliv':'https://cpimg.tistatic.com/07789888/b/4/Udiliv-300-Mg-Tablets.jpg'
   };
+
   function key(v){return String(v||'').trim().toLowerCase().replace(/\s+/g,' ')}
+  function proxied(src){return 'https://images.weserv.nl/?url='+encodeURIComponent(src)}
+
   function apply(){
     const grids=document.querySelectorAll('.medicine-grid');
     if(!grids.length)return;
@@ -41,20 +45,27 @@
       if(!title||!box||box.dataset.actualImageApplied==='1')return;
       const k=key(title.textContent),src=images[k];
       if(!src)return;
+
       const img=document.createElement('img');
       img.alt=title.textContent.trim()+' medicine packaging';
       img.loading='lazy';
+      img.decoding='async';
       img.referrerPolicy='no-referrer';
-      img.src=src;
+      img.src=proxied(src);
       img.onerror=function(){
-        // Keep a clean card if a remote pharmacy CDN blocks the request.
-        box.innerHTML='<div class="medicine-image-fallback" aria-label="Medicine image unavailable">Image unavailable</div>';
+        if(this.dataset.directTried!=='1'){
+          this.dataset.directTried='1';
+          this.src=src;
+          return;
+        }
+        box.innerHTML='<div class="medicine-image-fallback">Actual image temporarily unavailable</div>';
       };
       box.innerHTML='';
       box.appendChild(img);
       box.dataset.actualImageApplied='1';
     }));
   }
+
   const style=document.createElement('style');
   style.textContent='.medicine-grid .medicine-image img{width:100%;height:100%;max-width:100%;max-height:210px;object-fit:contain;display:block;padding:10px}.medicine-grid .medicine-image{overflow:hidden}.medicine-image-fallback{font-size:13px;color:#68756f;text-align:center;padding:30px}';
   document.head.appendChild(style);
