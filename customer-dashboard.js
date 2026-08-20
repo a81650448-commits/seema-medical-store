@@ -25,7 +25,6 @@
         <div class="dashboard-menu">
           <button type="button" onclick="dashboardGoTo('#products')"><span class="dashboard-icon">💊</span> Medicines</button>
           <button type="button" onclick="dashboardGoTo('#how')"><span class="dashboard-icon">🛒</span> How to Order</button>
-          <button type="button" onclick="openCustomerDashboardTracking()"><span class="dashboard-icon">📦</span> Track Order</button>
           <button type="button" onclick="openCustomerDashboardOrders()"><span class="dashboard-icon">📋</span> My Orders</button>
           <button type="button" onclick="dashboardGoTo('#contact')"><span class="dashboard-icon">📞</span> Contact Store</button>
           <button type="button" onclick="openDashboardCart()"><span class="dashboard-icon">🛍️</span> My Cart</button>
@@ -43,7 +42,6 @@
   window.closeCustomerDashboard=function(){const drawer=dashboardElement('customerDashboard');if(!drawer)return;drawer.classList.remove('open');document.body.classList.remove('dashboard-open')};
   window.dashboardLogout=async function(){if(typeof window.logoutCustomer!=='function')return;const button=dashboardElement('dashboardLogoutButton');if(button){button.disabled=true;button.textContent='Logging out...'}try{await window.logoutCustomer();closeCustomerDashboard()}finally{if(button){button.disabled=false;button.textContent='↪ Logout'}refreshDashboardProfile()}};
   window.dashboardGoTo=function(target){closeCustomerDashboard();setTimeout(function(){const el=document.querySelector(target);if(el)el.scrollIntoView({behavior:'smooth',block:'start'})},80)};
-  window.openCustomerDashboardTracking=function(){closeCustomerDashboard();window.location.href='track-order.html'};
   window.openCustomerDashboardOrders=function(){closeCustomerDashboard();window.location.href='my-orders.html'};
   window.openDashboardCart=function(){closeCustomerDashboard();setTimeout(function(){if(typeof window.openCart==='function')window.openCart()},80)};
   window.openDashboardLogin=function(){closeCustomerDashboard();setTimeout(function(){if(typeof window.openCustomerAuth==='function')window.openCustomerAuth('login')},80)};
