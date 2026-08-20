@@ -44,7 +44,7 @@
     overlay.innerHTML = `
       <aside class="customer-dashboard-drawer" onclick="event.stopPropagation()">
         <div class="dashboard-head">
-          <div><h2>👤 Customer Dashboard</h2><p>Seema Medical Store</p></div>
+          <div><h2>👤 <span id="dashboardTitle">Customer Dashboard</span></h2><p>Seema Medical Store</p></div>
           <button class="dashboard-close" type="button" onclick="closeCustomerDashboard()">×</button>
         </div>
         <div class="dashboard-profile" id="dashboardProfile">
@@ -69,6 +69,7 @@
   }
 
   function refreshDashboardProfile() {
+    const title = dashboardElement('dashboardTitle');
     const name = dashboardElement('dashboardProfileName');
     const email = dashboardElement('dashboardProfileEmail');
     const loginButton = dashboardElement('dashboardLoginButton');
@@ -77,8 +78,10 @@
     const account = dashboardElement('customerAccount');
     const displayName = dashboardElement('customerNameDisplay');
     if (account && !account.hidden) {
-      name.textContent = (displayName && displayName.textContent.trim()) || 'Customer';
+      const customerName = (displayName && displayName.textContent.trim()) || 'Customer';
+      name.textContent = customerName;
       email.textContent = 'Signed in to your customer account';
+      if (title) title.textContent = customerName;
       if (loginButton) {
         loginButton.textContent = '✓ Account Active';
         loginButton.disabled = true;
@@ -87,6 +90,7 @@
     } else {
       name.textContent = 'Guest Customer';
       email.textContent = 'Login to access your account';
+      if (title) title.textContent = 'Customer Dashboard';
       if (loginButton) {
         loginButton.textContent = '👤 Customer Login';
         loginButton.disabled = false;
@@ -94,6 +98,8 @@
       }
     }
   }
+
+  window.refreshCustomerDashboard = refreshDashboardProfile;
 
   window.openCustomerDashboard = function () {
     const drawer = dashboardElement('customerDashboard');
@@ -148,6 +154,24 @@
     if (event.key === 'Escape') closeCustomerDashboard();
   });
 
-  document.addEventListener('DOMContentLoaded', buildDashboard);
-  if (document.readyState !== 'loading') buildDashboard();
+  // Update the dashboard immediately after Supabase login/logout.
+  document.addEventListener('DOMContentLoaded', function () {
+    buildDashboard();
+    setTimeout(refreshDashboardProfile, 300);
+  });
+  if (document.readyState !== 'loading') {
+    buildDashboard();
+    setTimeout(refreshDashboardProfile, 300);
+  }
+
+  // customer-auth.js updates #customerNameDisplay when authentication changes.
+  // Observe that element so the dashboard title changes without a page refresh.
+  const observer = new MutationObserver(function () {
+    refreshDashboardProfile();
+  });
+  const startObserver = function () {
+    const displayName = dashboardElement('customerNameDisplay');
+    if (displayName) observer.observe(displayName, { childList: true, characterData: true, subtree: true });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startObserver); else startObserver();
 })();
