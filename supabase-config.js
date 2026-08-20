@@ -5,15 +5,13 @@
 window.SUPABASE_URL = "https://fdqgknsevrvejptxeiyn.supabase.co";
 window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkcWdrbnNldnJ2ZWpwdHhlaXluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMDU0MTUsImV4cCI6MjEwMjY4MTQxNX0.jAdhngvutaGra7mMS5gR9FJSNHwli2ST5TNHDGTNRCE";
 
-// Load the billing module after Supabase configuration is available.
 (function(){
   const s=document.createElement('script');
-  s.src='billing.js?v=20260821-01';
+  s.src='billing.js?v=20260821-02';
   s.defer=true;
   document.head.appendChild(s);
 })();
 
-// Actual medicine packaging images with a proxy fallback for GitHub Pages.
 (function(){
   const s=document.createElement('script');
   s.src='medicine-images.js?v=20260820-02';
@@ -21,11 +19,11 @@ window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXB
   document.head.appendChild(s);
 })();
 
-// Admin-only product price/stock controls and medicine list refresh.
+// Stable admin-only product price/stock controls.
 (function(){
-  if(!/admin\.html$/i.test(window.location.pathname)) return;
+  if(!/admin\\.html$/i.test(window.location.pathname)) return;
   const s=document.createElement('script');
-  s.src='product-control.js?v=20260821-02';
+  s.src='product-control-fixed.js?v=20260821-01';
   s.defer=true;
   document.head.appendChild(s);
 })();
