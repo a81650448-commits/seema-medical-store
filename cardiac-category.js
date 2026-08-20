@@ -1,18 +1,28 @@
 // Dedicated-page category routing for Seema Medical Store.
-// Keep this file side-effect-free: no MutationObserver and no repeated timers.
+// Safe version: does not replace buildCategories and does not use observers.
 (function(){
-  function renderCategoryLinks(){
+  function linkDedicatedCategories(){
     const tabs=document.getElementById('categoryTabs');
-    if(!tabs || typeof products==='undefined' || !Array.isArray(products)) return;
-    const cats=['All',...new Set(products.map(p=>p[0]))];
-    tabs.innerHTML=cats.map(function(c){
-      if(c==='Diabetes') return '<a class="tab" href="diabetes.html">Diabetes</a>';
-      if(c==='Cardiac Care') return '<a class="tab" href="cardiac-care.html">Cardiac Care</a>';
-      if(c==='Stomach Care') return '<a class="tab" href="stomach-care.html">Stomach Care</a>';
-      if(c==='Liver Care') return '<a class="tab" href="liver-care.html">Liver Care</a>';
-      return '<button class="tab '+(c==='All'?'active':'')+'" onclick="setCategory(\''+String(c).replace(/'/g,"\\'")+'\')">'+c+'</button>';
-    }).join('');
+    if(!tabs) return;
+    tabs.querySelectorAll('.tab').forEach(function(tab){
+      const name=(tab.textContent||'').trim();
+      const href={
+        'Diabetes':'diabetes.html',
+        'Cardiac Care':'cardiac-care.html',
+        'Stomach Care':'stomach-care.html',
+        'Liver Care':'liver-care.html'
+      }[name];
+      if(!href || tab.tagName==='A') return;
+      const a=document.createElement('a');
+      a.className=tab.className;
+      a.href=href;
+      a.textContent=name;
+      tab.replaceWith(a);
+    });
   }
-  // script.js calls buildCategories() after Supabase medicines load.
-  window.buildCategories=renderCategoryLinks;
+  window.addEventListener('load',function(){
+    linkDedicatedCategories();
+    setTimeout(linkDedicatedCategories,800);
+    setTimeout(linkDedicatedCategories,2000);
+  });
 })();
