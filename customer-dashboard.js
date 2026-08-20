@@ -2,6 +2,26 @@
 (function () {
   function dashboardElement(id) { return document.getElementById(id); }
 
+  function cleanMainPageExtras() {
+    // Keep My Orders / Track Order inside the customer dashboard only.
+    // Do not affect my-orders.html, where these features are intentionally available.
+    const path = window.location.pathname || '';
+    const isMainPage = path === '/' || /index\.html$/i.test(path);
+    if (!isMainPage) return;
+
+    const account = dashboardElement('customerAccount');
+    if (account) {
+      account.querySelectorAll('button').forEach(function (button) {
+        if (/my orders/i.test(button.textContent || '')) button.remove();
+      });
+    }
+
+    ['my-orders', 'track-order'].forEach(function (id) {
+      const el = dashboardElement(id);
+      if (el) el.remove();
+    });
+  }
+
   function buildDashboard() {
     if (dashboardElement('customerDashboard')) return;
     const style = document.createElement('style');
@@ -33,7 +53,7 @@
         <button id="dashboardLogoutButton" class="dashboard-logout" type="button" onclick="dashboardLogout()" hidden>↪ Logout</button>
         <div class="dashboard-footer">Secure customer area • Your orders & tracking</div>
       </aside>`;
-    overlay.onclick=function(event){if(event.target===overlay)closeCustomerDashboard()};document.body.appendChild(overlay);refreshDashboardProfile();
+    overlay.onclick=function(event){if(event.target===overlay)closeCustomerDashboard()};document.body.appendChild(overlay);refreshDashboardProfile();cleanMainPageExtras();
   }
 
   function refreshDashboardProfile(){const title=dashboardElement('dashboardTitle'),name=dashboardElement('dashboardProfileName'),email=dashboardElement('dashboardProfileEmail'),loginButton=dashboardElement('dashboardLoginButton'),logoutButton=dashboardElement('dashboardLogoutButton');if(!name||!email)return;const account=dashboardElement('customerAccount'),displayName=dashboardElement('customerNameDisplay');if(account&&!account.hidden){const customerName=(displayName&&displayName.textContent.trim())||'Customer';name.textContent=customerName;email.textContent='Signed in to your customer account';if(title)title.textContent=customerName;if(loginButton){loginButton.textContent='✓ Account Active';loginButton.disabled=true;loginButton.style.opacity='.7'}if(logoutButton)logoutButton.hidden=false}else{name.textContent='Guest Customer';email.textContent='Login to access your account';if(title)title.textContent='Customer Dashboard';if(loginButton){loginButton.textContent='👤 Customer Login';loginButton.disabled=false;loginButton.style.opacity='1'}if(logoutButton)logoutButton.hidden=true}}
@@ -46,6 +66,6 @@
   window.openDashboardCart=function(){closeCustomerDashboard();setTimeout(function(){if(typeof window.openCart==='function')window.openCart()},80)};
   window.openDashboardLogin=function(){closeCustomerDashboard();setTimeout(function(){if(typeof window.openCustomerAuth==='function')window.openCustomerAuth('login')},80)};
   document.addEventListener('keydown',function(event){if(event.key==='Escape')closeCustomerDashboard()});
-  document.addEventListener('DOMContentLoaded',function(){buildDashboard();setTimeout(refreshDashboardProfile,300)});if(document.readyState!=='loading'){buildDashboard();setTimeout(refreshDashboardProfile,300)}
-  const observer=new MutationObserver(function(){refreshDashboardProfile()});const startObserver=function(){const displayName=dashboardElement('customerNameDisplay');if(displayName)observer.observe(displayName,{childList:true,characterData:true,subtree:true})};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startObserver);else startObserver();
+  document.addEventListener('DOMContentLoaded',function(){buildDashboard();setTimeout(function(){refreshDashboardProfile();cleanMainPageExtras()},300)});if(document.readyState!=='loading'){buildDashboard();setTimeout(function(){refreshDashboardProfile();cleanMainPageExtras()},300)}
+  const observer=new MutationObserver(function(){refreshDashboardProfile();cleanMainPageExtras()});const startObserver=function(){const displayName=dashboardElement('customerNameDisplay');if(displayName)observer.observe(displayName,{childList:true,characterData:true,subtree:true})};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startObserver);else startObserver();
 })();
