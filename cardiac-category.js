@@ -1,4 +1,5 @@
-// Category navigation for dedicated medicine pages.
+// Dedicated-page navigation for medicine categories.
+// Liver Care must open its own page, just like Diabetes, Cardiac Care and Stomach Care.
 (function(){
   function applyCategoryLinks(){
     if(typeof products==='undefined' || !document.getElementById('categoryTabs')) return;
@@ -11,11 +12,9 @@
       return `<button class="tab ${c==='All'?'active':''}" onclick="setCategory('${c.replace(/'/g,"\\'")}')">${c}</button>`;
     }).join('');
   }
-  window.addEventListener('load',function(){
-    applyCategoryLinks();
-    setTimeout(applyCategoryLinks,500);
-    setTimeout(applyCategoryLinks,1500);
-  });
-  setTimeout(applyCategoryLinks,100);
-  setTimeout(applyCategoryLinks,1000);
+  // Re-apply after Supabase finishes loading medicines and after any later render.
+  window.addEventListener('load',applyCategoryLinks);
+  [100,500,1000,2000,3000,5000].forEach(ms=>setTimeout(applyCategoryLinks,ms));
+  const tabs=document.getElementById('categoryTabs');
+  if(tabs){new MutationObserver(applyCategoryLinks).observe(tabs,{childList:true,subtree:true});}
 })();
