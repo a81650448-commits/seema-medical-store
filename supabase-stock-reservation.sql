@@ -1,7 +1,6 @@
 -- Seema Medical Store: safe public stock reservation
 -- Run this ONCE in Supabase SQL Editor.
--- It keeps the medicines table protected from public UPDATE access while allowing
--- the customer website to reserve stock atomically.
+-- Uses fully-qualified column references to avoid the "column reference stock is ambiguous" error.
 
 create or replace function public.reserve_medicine_stock(
   p_medicine_id bigint,
@@ -18,11 +17,11 @@ begin
   end if;
 
   return query
-  update public.medicines
-     set stock = stock - p_quantity
-   where medicines.id = p_medicine_id
-     and stock >= p_quantity
-  returning medicines.id, medicines.name, medicines.stock;
+  update public.medicines AS m
+     set stock = m.stock - p_quantity
+   where m.id = p_medicine_id
+     and m.stock >= p_quantity
+  returning m.id, m.name, m.stock;
 end;
 $$;
 
@@ -41,10 +40,10 @@ begin
   end if;
 
   return query
-  update public.medicines
-     set stock = stock + p_quantity
-   where medicines.id = p_medicine_id
-  returning medicines.id, medicines.name, medicines.stock;
+  update public.medicines AS m
+     set stock = m.stock + p_quantity
+   where m.id = p_medicine_id
+  returning m.id, m.name, m.stock;
 end;
 $$;
 
