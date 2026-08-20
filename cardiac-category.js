@@ -1,21 +1,18 @@
-// Dedicated-page navigation for medicine categories.
-// Keep this lightweight: do NOT observe categoryTabs mutations because
-// changing innerHTML would trigger the observer again and freeze the page.
+// Dedicated-page category routing for Seema Medical Store.
+// Keep this file side-effect-free: no MutationObserver and no repeated timers.
 (function(){
-  function applyCategoryLinks(){
-    if(typeof products==='undefined' || !document.getElementById('categoryTabs')) return;
-    const cats=['All',...new Set(products.map(p=>p[0]))];
-    document.getElementById('categoryTabs').innerHTML=cats.map(c=>{
+  function renderCategoryLinks(){
+    const tabs=document.getElementById('categoryTabs');
+    if(!tabs || !Array.isArray(window.products)) return;
+    const cats=['All',...new Set(window.products.map(p=>p[0]))];
+    tabs.innerHTML=cats.map(function(c){
       if(c==='Diabetes') return '<a class="tab" href="diabetes.html">Diabetes</a>';
       if(c==='Cardiac Care') return '<a class="tab" href="cardiac-care.html">Cardiac Care</a>';
       if(c==='Stomach Care') return '<a class="tab" href="stomach-care.html">Stomach Care</a>';
       if(c==='Liver Care') return '<a class="tab" href="liver-care.html">Liver Care</a>';
-      return `<button class="tab ${c==='All'?'active':''}" onclick="setCategory('${c.replace(/'/g,"\\'")}')">${c}</button>`;
+      return '<button class="tab '+(c==='All'?'active':'')+'" onclick="setCategory(\''+String(c).replace(/'/g,"\\'")+'\')">'+c+'</button>';
     }).join('');
   }
-
-  // Supabase medicines load asynchronously, so apply once after the page loads
-  // and a few times while the initial data request completes.
-  window.addEventListener('load',applyCategoryLinks);
-  [300,1000,2000].forEach(ms=>setTimeout(applyCategoryLinks,ms));
+  // script.js calls buildCategories() after Supabase medicines load.
+  window.buildCategories=renderCategoryLinks;
 })();
