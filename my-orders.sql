@@ -28,6 +28,27 @@ BEFORE INSERT ON public.orders
 FOR EACH ROW
 EXECUTE FUNCTION public.set_order_user_id();
 
+-- Attach older orders to a customer when the order phone matches the
+-- phone saved in that customer's Supabase Auth metadata. Only unambiguous
+-- one-customer matches are updated.
+WITH matches AS (
+  SELECT o.order_id, MIN(u.id) AS user_id
+  FROM public.orders o
+  JOIN auth.users u
+    ON regexp_replace(COALESCE(o.phone,''), '\D', '', 'g') =
+       regexp_replace(COALESCE(u.raw_user_meta_data->>'phone',''), '\D', '', 'g')
+  WHERE o.user_id IS NULL
+    AND regexp_replace(COALESCE(o.phone,''), '\D', '', 'g') <> ''
+    AND regexp_replace(COALESCE(u.raw_user_meta_data->>'phone',''), '\D', '', 'g') <> ''
+  GROUP BY o.order_id
+  HAVING COUNT(u.id) = 1
+)
+UPDATE public.orders o
+SET user_id = m.user_id
+FROM matches m
+WHERE o.order_id = m.order_id
+  AND o.user_id IS NULL;
+
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 
 GRANT SELECT ON public.orders TO authenticated;
