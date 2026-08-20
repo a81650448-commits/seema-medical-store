@@ -7,6 +7,11 @@
 
     const style = document.createElement('style');
     style.textContent = `
+      /* Keep the main header clean: dashboard now contains these customer shortcuts. */
+      .topbar nav > a,
+      .topbar nav > #customerLoginBtn,
+      .topbar nav > #customerAccount,
+      .topbar nav > .cart-btn{display:none!important}
       .customer-dashboard-trigger{position:fixed;left:0;top:42%;z-index:40;border:0;background:#087443;color:#fff;padding:13px 10px;border-radius:0 12px 12px 0;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.18);writing-mode:vertical-rl;transform:rotate(180deg)}
       .customer-dashboard-overlay{position:fixed;inset:0;background:rgba(4,20,14,.48);z-index:50;opacity:0;visibility:hidden;transition:.2s ease}
       .customer-dashboard-overlay.open{opacity:1;visibility:visible}
