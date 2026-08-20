@@ -24,6 +24,8 @@
       .dashboard-profile strong{display:block;color:#087443;font-size:15px}.dashboard-profile span{display:block;margin-top:5px;color:#68756f;font-size:12px;word-break:break-word}
       .dashboard-menu{padding:0 12px}.dashboard-menu button{width:100%;display:flex;align-items:center;gap:13px;text-align:left;border:0;background:#fff;padding:14px 12px;border-radius:10px;font:inherit;font-weight:700;color:#25362f;cursor:pointer;margin:3px 0}.dashboard-menu button:hover{background:#eaf3ef;color:#087443}.dashboard-icon{width:28px;text-align:center;font-size:19px}
       .dashboard-login{margin:14px 18px 0;width:calc(100% - 36px);border:0;background:#087443;color:#fff;padding:12px;border-radius:10px;font-weight:800;cursor:pointer}
+      .dashboard-logout{margin:10px 18px 0;width:calc(100% - 36px);border:1px solid #d9534f;background:#fff;color:#c0392b;padding:12px;border-radius:10px;font-weight:800;cursor:pointer}
+      .dashboard-logout:hover{background:#fff2f1}
       .dashboard-footer{padding:18px;text-align:center;color:#8a9691;font-size:11px}
       body.dashboard-open{overflow:hidden}
       @media(max-width:520px){.customer-dashboard-trigger{top:45%;padding:11px 8px;font-size:12px}.customer-dashboard-drawer{width:86vw}}
@@ -60,6 +62,7 @@
           <button type="button" onclick="openDashboardCart()"><span class="dashboard-icon">🛍️</span> My Cart</button>
         </div>
         <button id="dashboardLoginButton" class="dashboard-login" type="button" onclick="openDashboardLogin()">👤 Customer Login</button>
+        <button id="dashboardLogoutButton" class="dashboard-logout" type="button" onclick="dashboardLogout()" hidden>↪ Logout</button>
         <div class="dashboard-footer">Secure customer area • Your orders & tracking</div>
       </aside>`;
     overlay.onclick = function (event) { if (event.target === overlay) closeCustomerDashboard(); };
@@ -73,6 +76,7 @@
     const name = dashboardElement('dashboardProfileName');
     const email = dashboardElement('dashboardProfileEmail');
     const loginButton = dashboardElement('dashboardLoginButton');
+    const logoutButton = dashboardElement('dashboardLogoutButton');
     if (!name || !email) return;
 
     const account = dashboardElement('customerAccount');
@@ -87,6 +91,7 @@
         loginButton.disabled = true;
         loginButton.style.opacity = '.7';
       }
+      if (logoutButton) logoutButton.hidden = false;
     } else {
       name.textContent = 'Guest Customer';
       email.textContent = 'Login to access your account';
@@ -96,6 +101,7 @@
         loginButton.disabled = false;
         loginButton.style.opacity = '1';
       }
+      if (logoutButton) logoutButton.hidden = true;
     }
   }
 
@@ -114,6 +120,25 @@
     if (!drawer) return;
     drawer.classList.remove('open');
     document.body.classList.remove('dashboard-open');
+  };
+
+  window.dashboardLogout = async function () {
+    if (typeof window.logoutCustomer !== 'function') return;
+    const button = dashboardElement('dashboardLogoutButton');
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Logging out...';
+    }
+    try {
+      await window.logoutCustomer();
+      closeCustomerDashboard();
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = '↪ Logout';
+      }
+      refreshDashboardProfile();
+    }
   };
 
   window.dashboardGoTo = function (target) {
