@@ -3,8 +3,8 @@
 (function(){
   function renderCategoryLinks(){
     const tabs=document.getElementById('categoryTabs');
-    if(!tabs || !Array.isArray(window.products)) return;
-    const cats=['All',...new Set(window.products.map(p=>p[0]))];
+    if(!tabs || typeof products==='undefined' || !Array.isArray(products)) return;
+    const cats=['All',...new Set(products.map(p=>p[0]))];
     tabs.innerHTML=cats.map(function(c){
       if(c==='Diabetes') return '<a class="tab" href="diabetes.html">Diabetes</a>';
       if(c==='Cardiac Care') return '<a class="tab" href="cardiac-care.html">Cardiac Care</a>';
