@@ -21,7 +21,7 @@ window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXB
 
 // Admin-only medicine editor.
 (function(){
-  if(!/admin\\.html$/i.test(window.location.pathname))return;
+  if(!/admin\.html$/i.test(window.location.pathname))return;
   const s=document.createElement('script');
   s.src='product-control-fixed.js?v=20260821-02';
   s.defer=true;
@@ -30,7 +30,7 @@ window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXB
 
 // Customer website expiry display; it reads the same medicines table.
 (function(){
-  if(/admin\\.html$/i.test(window.location.pathname))return;
+  if(/admin\.html$/i.test(window.location.pathname))return;
   const s=document.createElement('script');
   s.src='medicine-website-sync.js?v=20260821-01';
   s.defer=true;
