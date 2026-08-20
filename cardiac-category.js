@@ -1,5 +1,6 @@
 // Dedicated-page navigation for medicine categories.
-// Liver Care must open its own page, just like Diabetes, Cardiac Care and Stomach Care.
+// Keep this lightweight: do NOT observe categoryTabs mutations because
+// changing innerHTML would trigger the observer again and freeze the page.
 (function(){
   function applyCategoryLinks(){
     if(typeof products==='undefined' || !document.getElementById('categoryTabs')) return;
@@ -12,9 +13,9 @@
       return `<button class="tab ${c==='All'?'active':''}" onclick="setCategory('${c.replace(/'/g,"\\'")}')">${c}</button>`;
     }).join('');
   }
-  // Re-apply after Supabase finishes loading medicines and after any later render.
+
+  // Supabase medicines load asynchronously, so apply once after the page loads
+  // and a few times while the initial data request completes.
   window.addEventListener('load',applyCategoryLinks);
-  [100,500,1000,2000,3000,5000].forEach(ms=>setTimeout(applyCategoryLinks,ms));
-  const tabs=document.getElementById('categoryTabs');
-  if(tabs){new MutationObserver(applyCategoryLinks).observe(tabs,{childList:true,subtree:true});}
+  [300,1000,2000].forEach(ms=>setTimeout(applyCategoryLinks,ms));
 })();
