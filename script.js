@@ -55,20 +55,22 @@ async function reserveOnlineStock(db){
     const medicine=products[index]?.[4];
     if(!medicine) throw new Error("A medicine in your cart is no longer available. Please refresh and try again.");
     const id=medicine.id;
-    const {data,currentError}=await db.from("medicines").select("id,name,stock").eq("id",id).maybeSingle();
-    if(currentError) throw currentError;
-    if(!data||Number(data.stock||0)<qty) throw new Error(`${data?.name||medicine.name} has only ${Number(data?.stock||0)} unit(s) available. Please update your cart.`);
-    const next=Number(data.stock||0)-qty;
-    const {data:updated,error:updateError}=await db.from("medicines").update({stock:next}).eq("id",id).gte("stock",qty).select("id,stock").maybeSingle();
-    if(updateError) throw updateError;
-    if(!updated) throw new Error(`${data.name} stock changed while you were ordering. Please refresh and try again.`);
-    reservations.push({id,previous:Number(data.stock||0),name:data.name});
+    const {data,error}=await db.rpc("reserve_medicine_stock",{p_medicine_id:id,p_quantity:qty});
+    if(error) throw error;
+    if(!data||!data.length){
+      const current=await db.from("medicines").select("id,name,stock").eq("id",id).maybeSingle();
+      if(current.error) throw current.error;
+      const available=Number(current.data?.stock||0);
+      throw new Error(`${current.data?.name||medicine.name} has only ${available} unit(s) available. Please update your cart.`);
+    }
+    const reserved=data[0];
+    reservations.push({id:reserved.id,quantity:qty,name:reserved.name});
   }
   return reservations;
 }
 async function rollbackStock(db,reservations){
   for(const r of reservations){
-    try{await db.from("medicines").update({stock:r.previous}).eq("id",r.id)}catch(error){console.error("STOCK ROLLBACK ERROR",error)}
+    try{await db.rpc("restore_medicine_stock",{p_medicine_id:r.id,p_quantity:r.quantity});}catch(error){console.error("STOCK ROLLBACK ERROR",error)}
   }
 }
 
