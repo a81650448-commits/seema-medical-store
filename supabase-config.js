@@ -20,3 +20,12 @@ window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXB
   s.defer=true;
   document.head.appendChild(s);
 })();
+
+// Admin-only product price/stock controls.
+(function(){
+  if(!/admin\.html$/i.test(window.location.pathname)) return;
+  const s=document.createElement('script');
+  s.src='product-control.js?v=20260821-01';
+  s.defer=true;
+  document.head.appendChild(s);
+})();
