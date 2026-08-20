@@ -10,3 +10,18 @@ function startAnotherOrder(){
   document.getElementById('trackingResult')?.replaceChildren();
   document.getElementById('products')?.scrollIntoView({behavior:'smooth'});
 }
+
+(function addAnandTechnicalSolutionWatermark(){
+  function add(){
+    if(document.querySelector('.ats-watermark')) return;
+    const wrap=document.createElement('div');
+    wrap.className='ats-watermark';
+    wrap.setAttribute('aria-label','Anand Technical Solution');
+    const img=document.createElement('img');
+    img.src='anand-technical-solution-logo.svg';
+    img.alt='Anand Technical Solution';
+    wrap.appendChild(img);
+    document.body.appendChild(wrap);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',add); else add();
+})();
