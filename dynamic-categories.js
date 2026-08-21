@@ -1,4 +1,4 @@
-// Dynamic homepage categories: one unified sliding category section.
+// Dynamic homepage categories for Seema Medical Store.
 (function(){
   'use strict';
   const iconFor=name=>{
@@ -39,15 +39,13 @@
         map.get(key).count++;
       });
       const categories=[...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'en',{sensitivity:'base'}));
-      const all={name:'All Medicines',count:(data||[]).length,all:true};
-      const items=[all,...categories];
+      const items=[{name:'All Medicines',count:(data||[]).length,all:true},...categories];
       box.innerHTML=`<div class="category-slider-track">${items.map(c=>{
         const cat=c.all?'All':c.name;
         return `<button class="dynamic-category-card category-showcase-card" type="button" data-category="${escapeHtml(cat)}"><span class="dynamic-category-icon category-art" aria-hidden="true">${iconFor(c.name)}</span><span class="category-showcase-title">${escapeHtml(c.name)}</span><span class="category-showcase-desc">${escapeHtml(c.all?'Explore all our medicines in one place':descFor(c.name))}</span><small>${c.count} medicine${c.count===1?'':'s'}</small></button>`;
       }).join('')}</div>`;
       box.querySelectorAll('.dynamic-category-card').forEach(btn=>btn.addEventListener('click',()=>{
-        if(typeof window.setCategory==='function')window.setCategory(btn.dataset.category);
-        document.getElementById('productGrid')?.scrollIntoView({behavior:'smooth',block:'start'});
+        window.location.href='category.html?category='+encodeURIComponent(btn.dataset.category||'All');
       }));
     }catch(err){console.error('DYNAMIC CATEGORY ERROR',err);box.innerHTML='';}
   }
