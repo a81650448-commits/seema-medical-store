@@ -12,11 +12,12 @@ async function loadMedicines(){
     const {data,error}=await db.from("medicines").select("id,name,category,price,stock,manufacturer,expiry_date").order("name");
     if(error) throw error;
     products.length=0;
-    (data||[]).forEach(m=>products.push([m.category||"Other",m.name,"Available stock: "+(m.stock??0),Number(m.price)||0,m]));
+    (data||[]).forEach(m=>{
+      const category=String(m.category||"Other").trim()||"Other";
+      products.push([category,m.name,"Available stock: "+(m.stock??0),Number(m.price)||0,m]);
+    });
     buildCategories();
     renderProducts();
-    // Tell the single cart system that product IDs are now available.
-    // The listener restores the saved cart before processing any category deep-link.
     window.dispatchEvent(new Event("medicinesReady"));
     processMedicineDeepLink();
   }catch(error){
@@ -26,19 +27,55 @@ async function loadMedicines(){
     grid.innerHTML='<p>Unable to load medicines. Please refresh the page.</p>';
   }
 }
+
 function buildCategories(){
-  const cats=["All",...new Set(products.map(p=>p[0]))];
-  document.getElementById("categoryTabs").innerHTML=cats.map(c=>c==="Diabetes"?`<a class="tab" href="diabetes.html">Diabetes</a>`:`<button class="tab ${c==="All"?"active":""}" onclick="setCategory('${c.replace(/'/g,"\\'")}')">${c}</button>`).join("");
+  const tabBox=document.getElementById("categoryTabs");
+  if(!tabBox)return;
+
+  // Build the category list directly from the Supabase medicines table.
+  // Therefore every category entered by Admin automatically appears here.
+  const seen=new Map();
+  products.forEach(p=>{
+    const raw=String(p[0]||"Other").trim();
+    const name=raw||"Other";
+    const key=name.toLowerCase();
+    if(!seen.has(key))seen.set(key,name);
+  });
+
+  const categories=[...seen.values()].sort((a,b)=>a.localeCompare(b,"en",{sensitivity:"base"}));
+  if(activeCategory!=="All"&&!categories.some(c=>c.toLowerCase()===String(activeCategory).toLowerCase())){
+    activeCategory="All";
+  }
+
+  tabBox.innerHTML=["All",...categories].map(c=>{
+    const active=activeCategory.toLowerCase()===c.toLowerCase();
+    return `<button type="button" class="tab ${active?"active":""}" data-category="${escapeHtml(c)}">${escapeHtml(c)}</button>`;
+  }).join("");
+
+  tabBox.querySelectorAll(".tab").forEach(button=>{
+    button.addEventListener("click",()=>setCategory(button.dataset.category));
+  });
 }
-function setCategory(c){activeCategory=c;document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.textContent===c));renderProducts()}
+
+function escapeHtml(value){
+  return String(value??"").replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+}
+
+function setCategory(c){
+  activeCategory=String(c||"All");
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",String(b.dataset.category||b.textContent).toLowerCase()===activeCategory.toLowerCase()));
+  renderProducts();
+}
+
 function renderProducts(){
   const q=(document.getElementById("search").value||"").toLowerCase();
-  const f=products.filter(p=>(activeCategory==="All"||p[0]===activeCategory)&&(p[1]+" "+p[0]+" "+(p[4]?.manufacturer||"")).toLowerCase().includes(q));
+  const f=products.filter(p=>(activeCategory.toLowerCase()==="all"||String(p[0]).toLowerCase()===activeCategory.toLowerCase())&&(p[1]+" "+p[0]+" "+(p[4]?.manufacturer||"")).toLowerCase().includes(q));
   document.getElementById("productGrid").innerHTML=f.map(p=>{
     const i=products.indexOf(p), stock=Number(p[4]?.stock??0);
-    return `<article class="product"><div class="category">${p[0]}</div><h3>${p[1]}</h3><p>${p[2]}</p>${p[4]?.manufacturer?`<p class="small">${p[4].manufacturer}</p>`:""}<div class="product-bottom"><span class="price">${p[3]?"₹"+p[3]:"Check price"}</span><button class="add" ${stock<=0?"disabled":""} onclick="addToCart(${i})">${stock<=0?"Out of Stock":"Add"}</button></div></article>`
+    return `<article class="product"><div class="category">${escapeHtml(p[0])}</div><h3>${escapeHtml(p[1])}</h3><p>${escapeHtml(p[2])}</p>${p[4]?.manufacturer?`<p class="small">${escapeHtml(p[4].manufacturer)}</p>`:""}<div class="product-bottom"><span class="price">${p[3]?"₹"+p[3]:"Check price"}</span><button class="add" ${stock<=0?"disabled":""} onclick="addToCart(${i})">${stock<=0?"Out of Stock":"Add"}</button></div></article>`
   }).join("")||"<p>No medicine found.</p>";
 }
+
 function processMedicineDeepLink(){
   const params=new URLSearchParams(window.location.search),id=params.get("addMedicineId");
   if(!id)return;
@@ -86,6 +123,7 @@ async function reserveOnlineStock(db){
 async function rollbackStock(db,reservations){
   for(const r of reservations){try{await db.rpc("restore_medicine_stock",{p_medicine_id:r.id,p_quantity:r.quantity});}catch(error){console.error("STOCK ROLLBACK ERROR",error)}}
 }
+
 async function submitOrder(e){
  e.preventDefault();if(!cart.length){alert("Please add at least one product.");return}
  const button=document.querySelector('#orderForm button[type="submit"]');if(button){button.disabled=true;button.textContent="Checking stock..."}let reservations=[];
