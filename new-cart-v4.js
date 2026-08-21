@@ -5,13 +5,15 @@ const KEY='seema_cart_v4', USER_PREFIX='seema_cart_v4_user_';
 let hydrated=false, hydrating=false;
 function read(key=KEY){try{const v=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(v)?v:[]}catch(e){return[]}}
 function write(value,key=KEY){try{localStorage.setItem(key,JSON.stringify(value));window.dispatchEvent(new Event('cartUpdated'));return true}catch(e){console.error('CART V4 SAVE ERROR',e);return false}}
-function valid(){return Array.isArray(window.products)&&typeof cart!=='undefined'}
+// IMPORTANT: products is declared with `const` in script.js, so it is not a window property.
+// Check the lexical global directly instead of window.products.
+function valid(){return typeof products!=='undefined'&&Array.isArray(products)&&typeof cart!=='undefined'&&Array.isArray(cart)}
 function rawItems(){return read(KEY).map(x=>({id:x?.id,q:Math.max(1,Number(x?.q)||1)})).filter(x=>x.id!==undefined&&x.id!==null&&String(x.id)!=='')}
 function findProduct(id){if(!valid())return null;return products.find(p=>String(p?.[4]?.id)===String(id))||null}
 async function hydrateFromDatabase(){
   if(hydrating)return;
   if(valid()&&products.length){hydrated=true;fromStorage();return;}
-  if(!window.supabase||!window.SUPABASE_URL||!window.SUPABASE_ANON_KEY)return;
+  if(!window.supabase||!window.SUPABASE_URL||!window.SUPABASE_ANON_KEY){renderRaw();return;}
   hydrating=true;
   try{
     const db=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
@@ -22,6 +24,8 @@ async function hydrateFromDatabase(){
       (data||[]).forEach(m=>products.push([String(m.category||'Other').trim()||'Other',m.name,'Available stock: '+(m.stock??0),Number(m.price)||0,m]));
       hydrated=true;
       fromStorage();
+    }else{
+      renderRaw();
     }
   }catch(e){
     console.error('CART V4 MEDICINE HYDRATION ERROR',e);
@@ -73,7 +77,7 @@ function render(){
   const items=document.getElementById('cartItems');if(items)items.innerHTML=rows||"<p class='muted'>Your cart is empty.</p>";
   const more=document.getElementById('cartAddMoreButton');if(more)more.hidden=cart.length===0;
 }
-function add(i){if(!valid())return;const p=products[i];if(!p)return;const stock=Number(p[4]?.stock??0);if(stock<=0){alert('This medicine is currently out of stock.');return}const x=cart.find(v=>Number(v.i)===Number(i));if(x){if(x.q>=stock){alert('Only '+stock+' unit(s) available.');return}x.q++}else cart.push({i:Number(i),q:1});hydrated=true;persist();render()}
+function add(i){if(!valid()){hydrateFromDatabase();return}const p=products[i];if(!p)return;const stock=Number(p[4]?.stock??0);if(stock<=0){alert('This medicine is currently out of stock.');return}const x=cart.find(v=>Number(v.i)===Number(i));if(x){if(x.q>=stock){alert('Only '+stock+' unit(s) available.');return}x.q++}else cart.push({i:Number(i),q:1});hydrated=true;persist();render()}
 function qty(i,d){if(!valid())return;const x=cart.find(v=>Number(v.i)===Number(i));if(!x)return;const stock=Number(products[i]?.[4]?.stock??0);if(d>0&&x.q>=stock){alert('Only '+stock+' unit(s) available.');return}x.q+=Number(d);if(x.q<=0)cart.splice(cart.indexOf(x),1);persist();render()}
 function open(){const o=document.getElementById('cartOverlay');if(!o)return false;o.classList.add('open');o.style.display='flex';o.setAttribute('aria-hidden','false');renderRaw();if(valid()&&products.length)fromStorage();else hydrateFromDatabase();return true}
 function close(e){const o=document.getElementById('cartOverlay');if(!o)return;if(!e||e.target===o){o.classList.remove('open');o.style.removeProperty('display');o.setAttribute('aria-hidden','true');if(location.hash==='#cart')history.replaceState(null,'',location.pathname+location.search)}}
