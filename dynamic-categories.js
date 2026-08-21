@@ -1,6 +1,28 @@
-// Dynamic homepage categories: reads every category currently stored in Supabase.
+// Dynamic homepage categories: one unified sliding category section.
 (function(){
   'use strict';
+  const iconFor=name=>{
+    const n=String(name||'').toLowerCase();
+    if(n.includes('diabet'))return '🩺';
+    if(n.includes('cardiac')||n.includes('heart'))return '❤️';
+    if(n.includes('stomach')||n.includes('digest'))return '🧡';
+    if(n.includes('liver'))return '🫀';
+    if(n.includes('neuro')||n.includes('brain'))return '🧠';
+    if(n.includes('pain'))return '💊';
+    if(n.includes('pyret')||n.includes('fever'))return '🌡️';
+    return '💊';
+  };
+  const descFor=name=>{
+    const n=String(name||'').toLowerCase();
+    if(n.includes('diabet'))return 'Diabetes care medicines';
+    if(n.includes('cardiac')||n.includes('heart'))return 'Trusted heart-care medicines';
+    if(n.includes('stomach')||n.includes('digest'))return 'Acidity, gas and stomach care';
+    if(n.includes('liver'))return 'Support for liver health';
+    if(n.includes('neuro')||n.includes('brain'))return 'Neurological care medicines';
+    if(n.includes('pain'))return 'Pain relief medicines';
+    if(n.includes('pyret')||n.includes('fever'))return 'Fever and temperature care';
+    return 'Explore medicines in this category';
+  };
   async function loadDynamicCategories(){
     const box=document.getElementById('dynamicCategoryList');
     if(!box||!window.supabase||!window.SUPABASE_URL||!window.SUPABASE_ANON_KEY)return;
@@ -17,11 +39,15 @@
         map.get(key).count++;
       });
       const categories=[...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'en',{sensitivity:'base'}));
-      if(!categories.length){box.innerHTML='';return;}
-      box.innerHTML=categories.map(c=>`<button class="dynamic-category-card" type="button" data-category="${escapeHtml(c.name)}"><span class="dynamic-category-icon">💊</span><strong>${escapeHtml(c.name)}</strong><small>${c.count} medicine${c.count===1?'':'s'}</small></button>`).join('');
+      const all={name:'All Medicines',count:(data||[]).length,all:true};
+      const items=[all,...categories];
+      box.innerHTML=`<div class="category-slider-track">${items.map(c=>{
+        const cat=c.all?'All':c.name;
+        return `<button class="dynamic-category-card category-showcase-card" type="button" data-category="${escapeHtml(cat)}"><span class="dynamic-category-icon category-art" aria-hidden="true">${iconFor(c.name)}</span><span class="category-showcase-title">${escapeHtml(c.name)}</span><span class="category-showcase-desc">${escapeHtml(c.all?'Explore all our medicines in one place':descFor(c.name))}</span><small>${c.count} medicine${c.count===1?'':'s'}</small></button>`;
+      }).join('')}</div>`;
       box.querySelectorAll('.dynamic-category-card').forEach(btn=>btn.addEventListener('click',()=>{
         if(typeof window.setCategory==='function')window.setCategory(btn.dataset.category);
-        document.getElementById('products')?.scrollIntoView({behavior:'smooth'});
+        document.getElementById('productGrid')?.scrollIntoView({behavior:'smooth',block:'start'});
       }));
     }catch(err){console.error('DYNAMIC CATEGORY ERROR',err);box.innerHTML='';}
   }
