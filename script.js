@@ -15,6 +15,9 @@ async function loadMedicines(){
     (data||[]).forEach(m=>products.push([m.category||"Other",m.name,"Available stock: "+(m.stock??0),Number(m.price)||0,m]));
     buildCategories();
     renderProducts();
+    // Tell the single cart system that product IDs are now available.
+    // The listener restores the saved cart before processing any category deep-link.
+    window.dispatchEvent(new Event("medicinesReady"));
     processMedicineDeepLink();
   }catch(error){
     medicineLoadError=error.message||"Unable to load medicines.";
@@ -81,28 +84,20 @@ async function reserveOnlineStock(db){
   return reservations;
 }
 async function rollbackStock(db,reservations){
-  for(const r of reservations){
-    try{await db.rpc("restore_medicine_stock",{p_medicine_id:r.id,p_quantity:r.quantity});}catch(error){console.error("STOCK ROLLBACK ERROR",error)}
-  }
+  for(const r of reservations){try{await db.rpc("restore_medicine_stock",{p_medicine_id:r.id,p_quantity:r.quantity});}catch(error){console.error("STOCK ROLLBACK ERROR",error)}}
 }
-
 async function submitOrder(e){
- e.preventDefault(); if(!cart.length){alert("Please add at least one product.");return}
- const button=document.querySelector('#orderForm button[type="submit"]');if(button){button.disabled=true;button.textContent="Checking stock..."}
- let reservations=[];
+ e.preventDefault();if(!cart.length){alert("Please add at least one product.");return}
+ const button=document.querySelector('#orderForm button[type="submit"]');if(button){button.disabled=true;button.textContent="Checking stock..."}let reservations=[];
  try{
   if(!window.supabase||!window.SUPABASE_URL||!window.SUPABASE_ANON_KEY)throw new Error("Supabase connection is missing. Refresh the page.");
-  const payment=document.getElementById("paymentMethod").value,txn=document.getElementById("txn").value.trim();
-  if(payment==="UPI"&&!txn)throw new Error("Please complete the UPI/QR payment and enter the UTR / transaction reference before placing the order.");
+  const payment=document.getElementById("paymentMethod").value,txn=document.getElementById("txn").value.trim();if(payment==="UPI"&&!txn)throw new Error("Please complete the UPI/QR payment and enter the UTR / transaction reference before placing the order.");
   const db=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY),name=document.getElementById("customerName").value.trim(),phone=document.getElementById("customerPhone").value.trim(),address=document.getElementById("address").value.trim();
   const items=cart.map(x=>({name:products[x.i][1],pack:products[x.i][2],qty:x.q,price:Number(products[x.i][3])||0,medicine_id:products[x.i][4]?.id||null})),orderId="SMS-"+Date.now().toString().slice(-8),orderTotal=total();
-  if(button)button.textContent="Updating stock...";
-  reservations=await reserveOnlineStock(db);
+  if(button)button.textContent="Updating stock...";reservations=await reserveOnlineStock(db);
   const payload={order_id:orderId,customer_name:name,phone:phone,address:address,payment_method:payment,transaction_id:payment==="UPI"?txn:null,items:items,total:orderTotal,status:"Pending"};
   const customerResult=await db.from("customers").insert({name,phone,address});if(customerResult.error)console.warn("Customer save warning:",customerResult.error.message);
-  if(button)button.textContent="Submitting order...";
-  const orderResult=await db.from("orders").insert(payload);
-  if(orderResult.error){await rollbackStock(db,reservations);reservations=[];throw new Error(orderResult.error.message+(orderResult.error.details?" — "+orderResult.error.details:""));}
+  if(button)button.textContent="Submitting order...";const orderResult=await db.from("orders").insert(payload);if(orderResult.error){await rollbackStock(db,reservations);reservations=[];throw new Error(orderResult.error.message+(orderResult.error.details?" — "+orderResult.error.details:""));}
   document.getElementById("orderForm").hidden=true;document.getElementById("orderSuccess").hidden=false;document.getElementById("orderSuccess").innerHTML=`<strong>Order submitted successfully!</strong><br><br>Order ID: <strong>${orderId}</strong><br>Total: <strong>₹${orderTotal}</strong><br>Payment: <strong>${payment==="UPI"?"UPI / QR — UTR recorded":"Cash on Delivery"}</strong><br><br>Stock has been updated automatically.<br><br>Keep this Order ID to track your order.<br><br><button type="button" class="primary" onclick="startAnotherOrder()">🛒 Place Another Order</button>`;cart=[];updateCart();await loadMedicines();
  }catch(error){console.error("ORDER SUBMISSION ERROR",error);if(reservations.length)await rollbackStock(window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY),reservations);alert(error.message||"Unable to submit the order")}finally{if(button){button.disabled=false;button.textContent="Confirm & Place Order"}}
 }
