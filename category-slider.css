@@ -1,0 +1,14 @@
+/* Unified homepage category showcase: one large horizontal slider, no duplicate tab list. */
+#categoryTabs{display:none!important}
+#dynamicCategoryList{max-width:1120px;margin:28px auto 46px;padding:0 20px;display:block;position:relative}
+.category-slider-track{display:flex;gap:18px;overflow-x:auto;overflow-y:hidden;padding:8px 2px 18px;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:thin}
+.category-slider-track::-webkit-scrollbar{height:8px}
+.category-slider-track::-webkit-scrollbar-thumb{background:#b9cec5;border-radius:20px}
+.category-showcase-card{flex:0 0 230px;min-height:335px;border:1px solid #dce8e3;border-radius:22px;background:#fff;padding:28px 20px 22px;display:flex;flex-direction:column;align-items:center;text-align:center;justify-content:flex-start;cursor:pointer;scroll-snap-align:start;box-shadow:0 5px 18px rgba(16,32,51,.07);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.category-showcase-card:hover{transform:translateY(-5px);box-shadow:0 12px 28px rgba(16,32,51,.12);border-color:#b9d8cb}
+.category-art{width:178px;height:178px;flex:0 0 178px;border-radius:50%;display:grid;place-items:center;background:#edf6f2;font-size:92px;line-height:1;box-shadow:inset 0 0 0 1px #e2eee9}
+.category-showcase-title{margin-top:24px;font-size:21px;line-height:1.2;font-weight:800;color:#102033}
+.category-showcase-desc{margin-top:10px;font-size:13px;line-height:1.5;color:#65736d;min-height:39px}
+.category-showcase-card small{margin-top:auto;padding-top:12px;font-size:12px;font-weight:700;color:#087443}
+@media(max-width:850px){#dynamicCategoryList{padding:0 16px}.category-showcase-card{flex-basis:215px;min-height:315px}.category-art{width:155px;height:155px;flex-basis:155px;font-size:78px}}
+@media(max-width:520px){#dynamicCategoryList{margin-top:20px;margin-bottom:32px;padding:0 12px}.category-slider-track{gap:12px}.category-showcase-card{flex-basis:82vw;max-width:300px;min-height:330px}.category-art{width:170px;height:170px;flex-basis:170px;font-size:88px}}
