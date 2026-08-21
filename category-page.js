@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 const params=new URLSearchParams(window.location.search),requested=(params.get('category')||'All').trim()||'All';
-const CART_KEY='seema_cart_v3';const USER_CART_PREFIX='seema_cart_v3_user_';let medicines=[];
+const CART_KEY='seema_cart_v4';const USER_CART_PREFIX='seema_cart_v4_user_';let medicines=[];
 function esc(v){return String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]||c));}
 function readCart(){try{const v=JSON.parse(localStorage.getItem(CART_KEY)||'[]');return Array.isArray(v)?v:[]}catch(e){return[]}}
 function writeCart(v){try{localStorage.setItem(CART_KEY,JSON.stringify(v));window.dispatchEvent(new Event('cartUpdated'));return true}catch(e){console.error('CATEGORY CART SAVE ERROR',e);return false}}
