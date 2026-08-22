@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Track Order | Seema Medical Store</title>
+<title>Track Order | Aditya Medical Store</title>
 <link rel="stylesheet" href="style.css?v=20260820-04">
 <style>
 .page-wrap{max-width:900px;margin:50px auto;padding:0 20px}.tracking-box{background:#fff;border-radius:18px;padding:28px;box-shadow:0 10px 35px rgba(0,0,0,.08)}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}.form-grid label{display:flex;flex-direction:column;gap:7px;font-weight:700}.form-grid input{padding:13px;border:1px solid #d7e2dd;border-radius:10px;font:inherit}.tracking-card{margin-top:25px;padding:22px;border-radius:14px;background:#f3f8f5}.tracking-details{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}.detail{background:#fff;border:1px solid #dce8e2;border-radius:10px;padding:12px}.detail span{display:block;color:#69766f;font-size:12px;margin-bottom:4px}.tracking-status{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:22px 0}.tracking-status div{text-align:center;font-size:12px;color:#89958f}.tracking-status span{display:block;font-size:24px;margin-bottom:5px}.tracking-status .completed{color:#087443}.back{display:inline-block;margin-bottom:20px;color:#087443;font-weight:800;text-decoration:none}.auto-tracking-note{padding:12px 15px;border-radius:10px;background:#edf7f2;color:#087443;font-weight:700;margin-top:15px}@media(max-width:650px){.form-grid,.tracking-details,.tracking-status{grid-template-columns:1fr}.page-wrap{margin:25px auto}}
 </style>
 </head>
 <body>
-<header class="topbar"><div class="brand"><div class="logo">✚</div><div><strong>SEEMA</strong><span>MEDICAL STORE</span></div></div><nav><a href="index.html#products">Medicines</a><a href="index.html#contact">Contact</a></nav></header>
+<header class="topbar"><div class="brand"><div class="logo">✚</div><div><strong>ADITYA</strong><span>MEDICAL STORE</span></div></div><nav><a href="index.html#products">Medicines</a><a href="index.html#contact">Contact</a></nav></header>
 <main class="page-wrap"><a class="back" href="index.html">← Back to Store</a><div class="tracking-box"><p class="eyebrow">ORDER STATUS</p><h1>📦 Track Your Order</h1><p id="trackingIntro">Enter your Order ID and mobile number to check the current status.</p><div class="form-grid" id="trackingForm"><label>Order ID<input id="trackingOrderId" placeholder="e.g. SMS-23733805"></label><label>Mobile Number<input id="trackingPhone" type="tel" placeholder="10-digit mobile number"></label></div><button class="primary" id="trackButton" type="button" onclick="trackOrder()">🔍 Track Order</button><div id="autoTrackingNote"></div><div id="trackingResult"></div></div></main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js?v=20260820-05"></script>
 <script>
