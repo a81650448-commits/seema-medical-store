@@ -15,28 +15,7 @@
 <section id="delivery" class="section"><h2>Delivery Management</h2><div class="table-wrap"><table class="table"><thead><tr><th>Order</th><th>Customer</th><th>Phone</th><th>Address</th><th>Status</th></tr></thead><tbody id="deliveryBody"></tbody></table></div></section>
 <section id="notifications" class="section"><h2>Notifications</h2><div id="notificationsBody"></div></section>
 </main></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js?v=20260823-03"></script><script src="admin.js?v=20260821-02"></script><script src="admin-enhancements.js?v=20260821-01"></script><script src="inventory-fix.js?v=20260820-01"></script><script src="appointment-admin.js?v=20260822-02"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js?v=20260823-05"></script><script src="admin.js?v=20260821-02"></script><script src="admin-enhancements.js?v=20260821-01"></script><script src="inventory-fix.js?v=20260820-01"></script><script src="appointment-admin.js?v=20260822-02"></script>
 <script>
-(function(){
-  const ADMIN='a81650448@gmail.com';
-  function showError(t){const e=document.getElementById('loginError');e.textContent=t;e.classList.remove('hidden');}
-  window.addEventListener('error',function(e){if(document.getElementById('loginCard')&&!document.getElementById('loginCard').classList.contains('hidden'))showError('Admin panel error: '+(e.message||'JavaScript error'));});
-  document.getElementById('loginForm').addEventListener('submit',async function(e){
-    e.preventDefault();
-    const btn=document.getElementById('loginButton');btn.disabled=true;btn.textContent='Logging in...';
-    const email=document.getElementById('email').value.trim();const password=document.getElementById('password').value;
-    try{
-      if(!window.supabase) throw new Error('Supabase library did not load.');
-      if(!window.SUPABASE_URL||!window.SUPABASE_ANON_KEY) throw new Error('Supabase configuration did not load.');
-      const client=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
-      const {data,error}=await client.auth.signInWithPassword({email,password});
-      if(error) throw error;
-      if(!data.user) throw new Error('Login did not return a user session.');
-      if((data.user.email||'').toLowerCase()!==ADMIN.toLowerCase()){await client.auth.signOut();throw new Error('This account is not authorized as the store admin.');}
-      document.getElementById('loginCard').classList.add('hidden');document.getElementById('app').classList.remove('hidden');
-      if(typeof load==='function') await load();
-    }catch(err){showError(err.message||String(err));}
-    finally{btn.disabled=false;btn.textContent='Login';}
-  },true);
-})();
+(function(){const ADMIN='a81650448@gmail.com';function showError(t){const e=document.getElementById('loginError');e.textContent=t;e.classList.remove('hidden')}document.getElementById('loginForm').addEventListener('submit',async function(e){e.preventDefault();const b=document.getElementById('loginButton');b.disabled=true;b.textContent='Logging in...';try{const c=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);const {data,error}=await c.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value});if(error)throw error;if(!data.user)throw new Error('Login did not return a user session.');if((data.user.email||'').toLowerCase()!==ADMIN){await c.auth.signOut();throw new Error('This account is not authorized as the store admin.')}document.getElementById('loginCard').classList.add('hidden');document.getElementById('app').classList.remove('hidden');if(typeof load==='function')await load()}catch(x){showError(x.message||String(x))}finally{b.disabled=false;b.textContent='Login'}},true)})();
 </script></body></html>
