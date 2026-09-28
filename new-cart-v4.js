@@ -1,7 +1,7 @@
 // Seema Medical Store - Single Authoritative Cart V4
 (function(){
 'use strict';
-const KEY='seema_cart_v4', USER_PREFIX='seema_cart_v4_user_';
+const KEY='aditya_cart_v4', USER_PREFIX='aditya_cart_v4_user_';
 let hydrated=false, hydrating=false;
 function read(key=KEY){try{const v=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(v)?v:[]}catch(e){return[]}}
 function write(value,key=KEY){try{localStorage.setItem(key,JSON.stringify(value));window.dispatchEvent(new Event('cartUpdated'));return true}catch(e){console.error('CART V4 SAVE ERROR',e);return false}}
