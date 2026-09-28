@@ -17,3 +17,16 @@ for all
 to authenticated
 using (auth.email() = 'a81650448@gmail.com')
 with check (auth.email() = 'a81650448@gmail.com');
+
+
+-- The customer-facing GitHub Pages site uses the Supabase anon/publishable key.
+-- Allow public READ access to the medicine catalogue while keeping INSERT/UPDATE/DELETE
+-- restricted to the configured authenticated admin policy above.
+drop policy if exists "Public can view medicines" on public.medicines;
+create policy "Public can view medicines"
+on public.medicines
+for select
+to anon, authenticated
+using (true);
+
+grant select on public.medicines to anon, authenticated;
