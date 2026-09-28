@@ -1,4 +1,4 @@
-// Seema Medical Store - Customer My Orders
+// Aditya Medical Store - Customer My Orders
 (function(){
   let db=null;
   const $=id=>document.getElementById(id);
