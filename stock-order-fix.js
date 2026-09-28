@@ -54,7 +54,7 @@
       const orderTotal=total();
       if(button)button.textContent='Updating stock...';
       reservations=await reserveOnlineStockSafe(db);
-      const payload={order_id:orderId,customer_name:name,phone:phone,address:address,payment_method:payment,transaction_id:payment==='UPI'?txn:null,items,total:orderTotal,status:'Pending'};
+      const sessionResult=await db.auth.getSession();const userId=sessionResult.data?.session?.user?.id||null;const payload={order_id:orderId,customer_name:name,phone:phone,address:address,payment_method:payment,transaction_id:payment==='UPI'?txn:null,items,total:orderTotal,status:'Pending',user_id:userId};
       const customerResult=await db.from('customers').insert({name,phone,address});
       if(customerResult.error)console.warn('Customer save warning:',customerResult.error.message);
       if(button)button.textContent='Submitting order...';
