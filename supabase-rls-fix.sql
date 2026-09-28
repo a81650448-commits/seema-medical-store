@@ -5,6 +5,17 @@
 alter table public.orders enable row level security;
 alter table public.customers enable row level security;
 
+-- Medicines: the customer website must be able to read the public medicine catalogue.
+-- Keep writes restricted to the configured admin account.
+alter table public.medicines enable row level security;
+drop policy if exists "Public can view medicines" on public.medicines;
+create policy "Public can view medicines"
+on public.medicines
+for select
+to anon, authenticated
+using (true);
+grant select on public.medicines to anon, authenticated;
+
 -- Customers: the public website may create a customer record.
 drop policy if exists "Public can create customers" on public.customers;
 create policy "Public can create customers"
