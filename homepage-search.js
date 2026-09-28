@@ -32,7 +32,7 @@ async function setup(){
    if(!html)html='<div class="home-search-empty">No category or medicine found.</div>';
    results.innerHTML=html;results.hidden=false;
    results.querySelectorAll('.category-result').forEach(b=>b.addEventListener('click',()=>window.location.href='category.html?category='+encodeURIComponent(b.dataset.category)));
-   results.querySelectorAll('.home-search-add').forEach(b=>b.addEventListener('click',()=>{const row=searchRows[Number(b.dataset.index)];const products=window.products||[];const same=products.findIndex(p=>String(p?.[4]?.id)===String(row?.[4]?.id));if(typeof window.addToCart==='function')window.addToCart(same>=0?same:Number(b.dataset.index));}));
+   results.querySelectorAll('.home-search-add').forEach(b=>b.addEventListener('click',()=>{const row=searchRows[Number(b.dataset.index)];const products=window.products||[];const same=products.findIndex(p=>String(p?.[4]?.id)===String(row?.[4]?.id));if(typeof window.addToCart==='function'){if(same>=0)window.addToCart(same);else{alert('Medicine data is still loading. Please try again.');}}}));
  }
  input.addEventListener('input',run);
  input.addEventListener('search',run);
