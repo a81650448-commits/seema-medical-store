@@ -1,4 +1,4 @@
-// Dynamic homepage categories for Seema Medical Store.
+// Dynamic homepage categories for Aditya Medical Store.
 (function(){
   'use strict';
   const iconFor=name=>{const n=String(name||'').toLowerCase();if(n.includes('diabet'))return '🩺';if(n.includes('cardiac')||n.includes('heart'))return '❤️';if(n.includes('stomach')||n.includes('digest'))return '🧡';if(n.includes('liver'))return '🫀';if(n.includes('neuro')||n.includes('brain'))return '🧠';if(n.includes('pain'))return '💊';if(n.includes('pyret')||n.includes('fever'))return '🌡️';return '💊';};
